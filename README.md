@@ -18,14 +18,11 @@ The goal of this project is to provide the ability to convert legacy 4GL RDML co
 
 ### Road Map Items (High Level)
 - [x] Basic RDML commands (cleanup - coming soon)
-- [x] PHP output backend (cleanup = coming soon)
+- [x] PHP output backend (cleanup - coming soon)
 - [ ] Samples (future)
 - [ ] RDML extended commands (future)
 - [ ] BIFS - built in functions (future)
 - [ ] C# backend (future)
 - [ ] Elxir backend (future)
 
-## License
-
-MIT License - Free to use, modify, and distribute.
 
