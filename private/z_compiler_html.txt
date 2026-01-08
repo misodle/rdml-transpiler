@@ -1,0 +1,289 @@
+
+ometa CalcCompiler {
+
+	ast		= [array*:x]                                     		-> x.join(''),
+  
+	array	= ['start']												-> L_send_top()
+			| ['noop']												-> ''
+			| ['stmt' line:x]										-> (x)  
+			| ['end']												-> '',
+		  
+	line  	= stmt:x												-> (x)
+			| stmt2:x												-> (x)
+			| stmt3:x												-> (x),
+			
+	stmt3	= ['call' ['name' :f] ]									-> ''
+			| ['exchange' ['fields' [fld+:f]] ]						-> ''	
+			| ['leave' :x]											-> ''
+			| ['continue' :x]										-> ''
+			| ['select' :t :f :w :k :o :l]							-> ''
+			| ['fetch' :t :f :w :k :s]								-> ''
+			| ['update' :t :f :k :s]								-> ''
+			| ['delete' :t :w :k :s]								-> ''
+			| ['insert' :t :f :s]									-> ''
+			| ['define' :f :t]										-> '',
+			
+  	stmt2   = ['sort_list' ['name' :x] ['fields' [fld+:f]] ]		-> ''
+			| ['loc_entry' ['name' :x] comp:c fldk:n fldk:s :r]		-> ''
+			| ['get_entry' ['name' :x] comp:c comp:f]				-> ''
+			| ['get_entry' ['name' :x] comp:c]						-> ''
+			| ['dlt_entry' ['name' :x] comp:c]						-> ''
+			| ['dlt_entry' ['name' :x]]								-> ''
+			| ['upd_entry' ['name' :x]]								-> ''
+			| ['add_entry' ['name' :x]]								-> ''
+			| ['endselect']											-> ''
+			| ['selectlist' ['name' :x] comp:c]						-> ''
+			| ['selectlist' ['name' :x] ]							-> ''
+			| ['inz_list' ['name' :x] comp:e ] 						-> ''
+			| ['def_list' ['name' :x] ['fields' [fld+:y]] ['counter' ['id' :c]] ] 
+																	-> def_list(x,y,c)
+			| ['clr_list' ['name' :x]]                            	-> '',
+  
+	stmt    = ['begin_loop' comp:u comp:f comp:t comp:s]     		-> ''
+			| ['end_loop']                                   		-> ''
+			| ['request' ['fields' [fld+:x]] ]  					-> L_emit_field(x)
+			| ['subroutine' ['name' :x] ['fields' [comp+:y]] ] 		-> ''
+			| ['subroutine' ['name' :x]]					   		-> ''
+			| ['endroutine']								   		-> ''
+			| ['execute' ['name' :x] ['fields' [comp+:y]] ]			-> ''
+			| ['execute' ['name' :x]]						   		-> ''
+			| ['change' ['fields' [comp+:x]] ['to' comp:y]]  		-> ''
+			| ['dountil' comp:x] 				   			   		-> ''
+			| ['enduntil']                                   		-> ''
+			| ['dowhile' comp:x] 				   			   		-> ''
+			| ['endwhile']                                   		-> ''
+			| ['print_id' comp:x]                            		-> ''
+			| ['assign' comp:x comp:y]                       		-> ''
+			| ['if' comp:x] 				                   		-> ''
+			| ['else']									   			-> ''
+			| ['endif']                                      		-> ''
+			| ['comment' :x]								   		-> ''
+			| ['error' :x]                                   		-> '',
+
+
+		  
+  fld   	= ['id' :x ['attr' anything:y]]	               			-> ida(x,y)
+			| ['id' :x]                                     		-> ida(x,[]),		  
+
+  fldk   	= ['id' :x]                                     		-> ''
+			| :x													-> '',
+			
+			
+  comp  	= ['id'  :x]                                     		-> ''
+			| ['lit1' :x]                          	   	   			-> ''
+			| ['lit2' :x]                          	       			-> ''
+			| ['logic_op' :o]                                		-> ''
+			| ['num' :x ]                                    		-> ''      
+			| ['and' comp:x comp:y]		                   			-> ''
+			| ['or' comp:x comp:y] 		                   			-> ''
+			| ['comp' comp:x comp:o comp:y]                  		-> ''
+			| ['add' comp:x comp:y]                          		-> ''
+			| ['sub' comp:x comp:y]                          		-> ''
+			| ['mul' comp:x comp:y]                          		-> ''
+			| ['div' comp:x comp:y]                          		-> ''
+			| ['*internal']                                  		-> ''     		  	  
+}
+function ida(x,y)
+{
+	var field_array = new Array(x);				// convert field to array
+	field_array = field_array.concat(y);		// add on the attributes array
+	return field_array; 
+}   	
+function L_send_top()
+{
+	def_list_stack			= new Array();		// global stack to save list definitions
+	def_list_screen   		= new Array();		// global stack to save lists for screen
+	
+	return;
+}  
+function def_list(x,y,c)
+{
+																// [listname counter [field1 attr1 attr2] [f2 a1 a2] etc....]
+	var local_def_list = new Array();							// local def list array
+	local_def_list.push(x);										// push name
+	local_def_list.push(c);										// push counter (or N/A)
+	
+	for(i=0;i<y.length;i++) {										
+		local_def_list.push(y[i]);								// push the fields
+	}
+	
+	def_list_stack.push(local_def_list);						// push the local array onto global def_list array list
+	
+	return;
+}
+function L_emit_field(x)
+{
+	var fldName = '';						// field name	
+	var varName = '';						// field variable name
+	var attrArray = new Array();			// field attribute array
+
+	var flgInput 		= new Boolean();
+	var flgHide 		= new Boolean();
+	var flgOutput 		= new Boolean();
+	var flgPassword 	= new Boolean();
+	var flgLabel		= new Boolean();
+
+	myY   = "<html>\n";
+	myY  += "<head>\n";
+	myY  += "<script type=\"text/javascript\" src=\"ll_library.js\"></script>\n";
+	myY  += "</head>\n";
+	myY  += "<body>\n";
+
+	myY  += '<img src="images/lansagif.gif">\n';
+	
+	myY  += "<form name=\"FORM\" action=\"[onshow.CurrentScript]\" method=\"POST\">\n";
+		
+	myY  +="<table><tr> <th> </th> <th> </th> <th> </th> </tr>\n";							// empty row to build columns
+
+	// remove DEF_LISTS from variable list - we will output those later
+	var local_def_list = new Array();							
+	var array_name    = '';										
+	for (var j=0; j<x.length; j++) {
+		fldName = x[j][0];
+		//myY += "fldName:" + fldName + "<br>\n";
+		for(i=0;i<def_list_stack.length;i++) {						// spin the DEF_LIST array
+			local_def_list = def_list_stack[i];						// get next DEF_LIST off array
+			array_name = local_def_list[0];							// get the LIST name
+			//myY += "array_name:" + array_name + "<br>\n";
+			if (array_name == fldName) {
+			    //myY += "matchfound:" + array_name + "," + fldName + "<br>\n";
+				x.splice(j,1);										// remove DEF_LIST name from variablestack
+				def_list_screen.push(local_def_list);				// copy DEF_LIST definition to screen list array
+				j=0													// yes this is icky...need this cleaner way to do this
+																	// this may not actually work in all cases??
+			}
+		}
+	}
+// this outputs lists in def_list definition order, we want request order	
+//	for(i=0;i<def_list_stack.length;i++) {						// spin the DEF_LIST array
+//		local_def_list = def_list_stack[i];						// get next DEF_LIST off array
+//		array_name = local_def_list[0];							// get the LIST name
+//		for (var j=0; j<x.length; j++) {
+//			fldName = x[j][0];
+//			if (array_name == fldName) {
+//				x.splice(j,1);									// remove DEF_LIST name from variablestack
+//				def_list_screen.push(local_def_list);			// copy DEF_LIST definition to screen list array
+//				break;									
+//			}
+//		}
+//	}
+	
+	// Build form fields
+	for (var i=0; i<x.length; i++) {
+
+		fldName 	= x[i][0];
+		varName 	= '$' + fldName;
+		attrArray 	= x[i].slice(1);
+		
+		flgInput 	= true;							// default to input
+		flgHide 	= false;
+		flgOutput 	= false;
+		flgPassword = false;
+		flgLabel 	= false;
+		
+		if (attrArray.indexOf("*IN") != -1) 		flgInput 	= true;
+		if (attrArray.indexOf("*HIDE") != -1) 		flgHide 	= true;	
+		if (attrArray.indexOf("*OUT") != -1) 		flgOutput 	= true;	
+		if (attrArray.indexOf("*ND") != -1) 		flgPassword = true;	
+		if (attrArray.indexOf("*NOID") != -1) 		flgLabel 	= true;	
+		
+		myY  +="<tr><td>";
+		if (!flgLabel) myY += fldName;  		
+		myY  +="</td><td></td><td><td>";	
+		
+		if (flgOutput) {
+			myY += "[onshow."  + fldName + "]";
+		}
+		else if (flgHide) {
+			myY += "<input type=\"hidden\" name=\"" + fldName + "\" value=\"[onshow."  + fldName + "]\">";
+		}
+		else if (flgPassword) {
+			myY += "<input type=\"password\" name=\"" + fldName + "\" value=\"[onshow."  + fldName + "]\">";
+		}
+		else if (flgInput) {
+			myY += "<input type=\"text\" name=\"" + fldName + "\" value=\"[onshow."  + fldName + "]\">";
+		}
+		
+		myY  +="</td></tr>\n";	
+	}
+
+	myY  +="</table>\n";	
+	
+	// Build each list
+	for(i=0;i<def_list_screen.length;i++) {						// spin the DEF_LIST array
+		local_def_list = def_list_screen[i];					// get next DEF_LIST off array
+		array_name = local_def_list[0];							// get the LIST name
+		
+		myY += '<table>\n';
+		
+		myY += '<tr style="background-color:#CACACA">\n';				// column headings
+		for (var j=2; j<local_def_list.length; j++) {
+			fldName = local_def_list[j][0];
+			myY += '<td><strong>';
+			myY += fldName;
+			myY += '</strong></td>\n';
+		}
+		myY += '</tr>\n';
+		
+		var myRow = '';													// build a Row
+		for (var j=2; j<local_def_list.length; j++) {
+		
+			fldName 	= local_def_list[j][0];
+			varName 	= '$' + fldName;
+			attrArray 	= local_def_list[j].slice(1);
+		
+			flgInput 	= true;							// default to input
+			flgHide 	= false;
+			flgOutput 	= false;
+			flgPassword = false;
+			flgLabel 	= false;
+		
+			if (attrArray.indexOf("*IN") != -1) 		flgInput 	= true;
+			if (attrArray.indexOf("*HIDE") != -1) 		flgHide 	= true;	
+			if (attrArray.indexOf("*OUT") != -1) 		flgOutput 	= true;	
+			if (attrArray.indexOf("*ND") != -1) 		flgPassword = true;	
+			if (attrArray.indexOf("*NOID") != -1) 		flgLabel 	= true;		// not relevant in this context, kept logic for later maybe
+
+			myRow += '<td>';
+
+			var myBlock = '';
+			if (j==2) myBlock += ';block=tr';
+			
+			if (flgOutput) {
+				myRow += '[' + array_name + '.' + fldName;
+				myRow += myBlock;
+				myRow += ']';
+			}
+			else if (flgHide) {
+				myRow += '<input type="hidden" name="' + array_name + ':[' + array_name + '.#]:' + fldName + '" value="[' + array_name + '.' + fldName + myBlock + ']">';
+			}
+			else if (flgPassword) {
+				myRow += '<input type="password" name="' + array_name + ':[' + array_name + '.#]:' + fldName + '" value="[' + array_name + '.' + fldName + myBlock + ']">';
+			}
+			else if (flgInput) {
+				myRow += '<input type="text" name="' + array_name + ':[' + array_name + '.#]:' + fldName + '" value="[' + array_name + '.' + fldName + myBlock + ']">';
+			}
+			
+			myRow += '</td>\n';
+		}
+		
+		myY += '<tr style="background-color:#F0F0F0">\n' + myRow + '</tr>\n';		// odd row
+		myY += '<tr style="background-color:#E6E6E6">\n' + myRow + '</tr>\n';		// even row
+		
+		myY += '<tr style="background-color:#FFCFB9">\n';							// blank table
+        myY += '<td colspan="99">[' + array_name + ';block=tr;nodata]There is no data.</td>\n';
+        myY += '</tr>\n';
+		myY += '</table>\n';
+	}
+	
+	myY += "<input name=\"button\" type=\"submit\" value=\"Submit\">\n";
+	
+	// myY+= "DEBUG: \n" + x.toSource() + "\n";
+	
+	myY += "</form>\n";
+	myY += "</body>\n";
+	myY += "</html>\n";
+	
+	return myY;
+}
+

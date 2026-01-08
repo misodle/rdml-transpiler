@@ -1,0 +1,1546 @@
+
+ometa CalcCompiler {
+
+	ast		= [array*:x]                                     						-> ast(x), 
+  
+	array	= ['start']                                      						-> L_send_top()
+			| ['noop']                                       						-> noop() 
+			| ['stmt' line:x]                                						-> stmt_main(x)
+			| ['end']                                        						-> L_send_bottom(),
+  
+	line	= stmt:x 		                                   						-> stmt(x)
+			| stmt2:x																-> stmt(x)	
+			| stmt3:x																-> stmt(x),	
+
+	stmt3	= ['call' ['name' :f] ]													-> call_function(f)
+			| ['exchange' ['fields' [fld+:f]] ]										-> exchange(f)
+			| ['select' ['name' :n] :f]												-> select(n,f)	// what is this???
+			| ['leave' comp:x]														-> l_leave(x)
+			| ['leave' 'N/A':x]														-> l_leave(x)
+			| ['continue' comp:x]													-> l_continue(x)
+			| ['continue' 'N/A':x]													-> l_continue(x)
+			| ['select' ['name' :t] dbf:f dbw:w dbk:k dbo:o dbl:l]					-> l_select(t,f,w,k,o,l)
+			| ['fetch'  ['name' :t] dbf:f dbw:w dbk:k dbs:s]						-> l_fetch(t,f,w,k,s)
+			| ['update' ['name' :t] dbf:f       dbk:k dbs:s]						-> l_update(t,f,k,s)
+			| ['delete' ['name' :t]       dbw:w dbk:k dbs:s]						-> l_delete(t,w,k,s)
+			| ['insert' ['name' :t] dbf:f             dbs:s]						-> l_insert(t,f,s)
+			| ['define' ['id' :f] :t]												-> define(f,t),
+			
+	dbf		= ['fields' [fld+:f]]													-> f
+			| '*ALL':f																-> f,
+	dbw		= 'N/A':w																-> w
+			| anything:w															-> w,
+	dbk		= [fld+:k]																-> k
+			| 'N/A':k																-> k,
+	dbs		= ['id' :s]																-> s
+			| ('*STATUS'|'N/A'):s													-> s,
+	dbo		= 'N/A':o																-> o
+			| [anything+:o]															-> o,
+	dbl		= [comp:s comp:l]														-> [s,l]
+			| ['N/A':s comp:l]														-> [s,l]
+			| ['N/A':s 'N/A':l]														-> [s,l],
+			
+	stmt2   = ['sort_list' ['name' :x] ['fields' [fld+:f]] ]						-> sort_list(x,f)
+			| ['loc_entry' ['name' :x] comp:c fldk:n fldk:s :r]						-> loc_entry(x,c,n,s,r)
+			| ['get_entry' ['name' :x] comp:c comp:f]								-> get_entry(x,c,f)
+			| ['get_entry' ['name' :x] comp:c]										-> get_entry(x,c,'*STATUS')
+			| ['dlt_entry' ['name' :x] comp:c]										-> dlt_entry(x,c)
+			| ['dlt_entry' ['name' :x]]												-> dlt_entry(x,'*CURRENT')
+			| ['upd_entry' ['name' :x]]												-> upd_entry(x)
+			| ['add_entry' ['name' :x]]												-> add_entry(x)
+			| ['endselect']															-> endselect()
+			| ['selectlist' ['name' :x] comp:c]										-> selectlist(x,c)
+			| ['selectlist' ['name' :x] ]											-> selectlist(x,'(1==1)')
+			| ['inz_list' ['name' :x] comp:e ] 										-> inz_list(x,e)
+			| ['def_list' ['name' :x] ['fields' [fld+:y]] ['counter' ['id' :c]]]	-> def_list(x,y,c)
+			| ['clr_list' ['name' :x]]                            					-> clr_list(x),
+	
+	stmt	= ['begin_loop' comp:u comp:f comp:t comp:s] 							-> begin_loop(u,f,t,s) 
+			| ['end_loop']                   										-> end_loop() 
+			| ['request' ['fields' [fld+:x]] ]  									-> L_emit_field(x)
+			| ['subroutine' ['name' :x] ['fields' [comp+:y]] ] 						-> subroutine2(x,y)
+			| ['subroutine' ['name' :x]]									   		-> subroutine(x)
+			| ['endroutine']														-> endroutine()
+			| ['execute' ['name' :x] ['fields' [comp+:y]] ]							-> execute2(x,y)
+			| ['execute' ['name' :x]]												-> execute(x)
+			| ['change' ['fields' [comp+:x]] ['to' comp:y]]							-> change(x,y)
+			| ['dountil' comp:x] 				   									-> dountil(x)
+			| ['enduntil']                   										-> enduntil() 
+			| ['dowhile' comp:x] 													-> dowhile(x) 
+			| ['endwhile']  														-> endwhile() 
+			| ['print_id' comp:x]                     								-> print_id(x)
+			| ['assign' comp:x comp:y]          									-> assign(x,y) 
+			| ['if' comp:x] 				   										-> l_if(x) 
+			| ['else']																-> l_else() 
+			| ['endif']                                      						-> l_endif()	
+			| ['comment' :x]								   						-> comment(x)
+			| ['error' :x]                                   						-> error(x),
+    
+	fld     = ['id' :x ['attr' anything:y]]											-> ida(x,y)
+			| ['id' :x]																-> ida(x,[]),		  
+    
+	fldk   	= ['id' :x]					                                     		-> id(x)
+			| :k																	-> k,
+			
+	comp    = ['id' :x]																-> id(x)
+			| ['lit1' :x]															-> x
+			| ['lit2' :x]															-> x			  
+			| ['logic_op' :o]														-> o
+			| ['num' :x ]															-> x
+			| ['and' comp:x comp:y]													-> l_and(x,y) 
+			| ['or' comp:x comp:y]													-> l_or(x,y) 
+			| ['comp' comp:x comp:o comp:y]											-> l_comp(x,o,y) 
+			| ['add' comp:x comp:y]													-> l_add(x,y) 
+			| ['sub' comp:x comp:y]													-> l_sub(x,y) 
+			| ['mul' comp:x comp:y]													-> l_mul(x,y) 
+			| ['div' comp:x comp:y]													-> l_div(x,y) 
+			| ['*internal']															-> l_internal() 
+}
+function ast(x)
+{
+	return x.join('');
+}
+function noop()
+{
+	return '';
+}
+function stmt_main(x)
+{
+	//return x + '\n';  
+	return x;
+}
+function stmt(x)
+{
+	if (inSubr == "Y")  				// cache the subroutine body, output later
+	{
+		subroutine_body += x;
+		subroutine_body += '\n';
+		return '';
+	}
+	if (inSubr == "N")					// cache the main body, output later
+	{
+		main_body += x;
+		main_body += '\n';
+		return '';
+	}
+	if (inSubr == "F")					// just found endroutine - send subroutine body
+	{
+		inSubr = "N";
+		return x + '\n';				// return subroutine body
+	}
+}
+
+function define(f,t)
+{
+	fields_stack.push(f);
+	fields_stack.push(t);
+	return '';
+}
+function findFieldType(f,t)
+{
+	// find string definition in local DEFINES first
+	
+	var i = 0;
+	var is_string = false;
+	var found = false;
+	for(i=0;i<fields_stack.length;i=i+2) {
+		var fld  = fields_stack[i];
+		var type = fields_stack[i+1];
+		if (fld == f)
+		{
+			if (type == "*CHAR")
+			{
+				is_string = true;
+			}
+			if (type == "*DEC")
+			{
+				is_string = false;
+			}
+			found = true;
+			break;
+		}
+	}
+	
+	if (found == true)
+	{
+		return is_string;
+	}
+	
+	// not found yet, look in FILE definitions
+	for(i=0;i<tables.length;i=i+2) 
+	{
+		var file  = tables[i];
+		var tfields = tables[i+1];
+		if (file == t)
+		{
+			for(i=0;i<tfields.length;i=i+3) 
+			{
+				var name = tfields[i];
+				var type = tfields[i+1];
+				var key  = tfields[i+2];
+				if (name == f)
+				{
+					is_string = false;
+					if (type.indexOf("CHAR") >= 0) is_string = true;
+					if (type.indexOf("ENUM") >= 0) is_string = true;
+					if (type.indexOf("SET")  >= 0) is_string = true;
+					if (type.indexOf("BLOB") >= 0) is_string = true;
+					break;  // leave fields loop
+				}
+			}
+			break; // leave files loop
+		}
+	}
+	
+	return is_string;
+}
+function getAllFields(t)
+{
+	var i = 0;
+	var fields = new Array();
+	for(i=0;i<tables.length;i=i+2) 
+	{
+		var file  = tables[i];
+		var tfields = tables[i+1];
+		if (file == t)
+		{
+			for(i=0;i<tfields.length;i=i+3) 
+			{
+				var name = tfields[i];
+				fields.push(name);
+			}
+			break; // leave files loop
+		}
+	}
+	
+	return fields;
+}
+function getAllKeys(t)
+{
+	var i = 0;
+	var fields = new Array();
+	for(i=0;i<tables.length;i=i+2) 
+	{
+		var file  = tables[i];
+		var tfields = tables[i+1];
+		if (file == t)
+		{
+			for(i=0;i<tfields.length;i=i+3) 
+			{
+				var key  = tfields[i+2];
+				var name = tfields[i];
+				if (key=="PRI") fields.push(name);
+			}
+			break; // leave files loop
+		}
+	}
+	
+	return fields;
+}
+function formatWhere(w,t)
+{
+	function formatOne(match)
+	{
+		var str1 = match.toUpperCase();
+		var str2 = str1.substr(1,str1.length-1);
+		var str3 = '$' + str2;
+		var is_string = findFieldType(str2,t);
+		if (is_string == true)
+		{
+			return  "' . '\\'' . " + str3 + " . '\\'' . '";
+		} 
+		else
+		{
+			return  "' . " + str3 + " . '";
+		}
+	}
+	return w.replace(/[\#]{1}[a-zA-Z0-9_]+/g, formatOne);
+}
+function add_files_stack(t)
+{
+	if (files_stack.indexOf(t) == -1)
+	{
+		files_stack.push(t);   
+		var get_file = "oam_" + t + ".txt";
+		var get_src  = read(get_file);
+		eval(get_src);
+	}
+}
+function l_select(t,f,w,k,o,l)
+{
+	add_files_stack(t);
+	
+	var i = 0;
+	var field = '';
+	var fields = '';
+	var where = '';
+	var withkey = '';
+	var startkey = false;
+	var endwhere = false;
+	var backwards = false;
+	
+	if (f == '*ALL')
+	{
+		fields = '*'
+	}
+	else
+	{
+		for(i=0;i<f.length;i++) {
+			field = f[i][0];
+			fields += field;
+			if (i < f.length - 1) fields += ',';
+			if (inSubr == "Y" && subroutine_id_stack.indexOf(field) == -1) subroutine_id_stack.push(field);   	
+			if (inSubr == "N" && main_body_id_stack.indexOf(field) == -1) main_body_id_stack.push(field);   	
+		}
+	}
+	
+	var myY = "$query";
+	myY += " = ";
+	myY += "'";			
+	myY += "select ";
+	myY += fields;
+	myY += " from ";
+	myY += t;
+	myY += "'";
+		
+	if (k != 'N/A')
+	{
+		for(i=0;i<k.length;i++) {
+			field = k[i][0];
+			if (inSubr == "Y" && subroutine_id_stack.indexOf(field) == -1) subroutine_id_stack.push(field);   	
+			if (inSubr == "N" && main_body_id_stack.indexOf(field) == -1) main_body_id_stack.push(field);   	
+			var is_string = findFieldType(field,t);
+			if (is_string == true)
+			{
+				withkey += " . '" + field + "=' . '\\'' . $" + field + " . '\\''";
+			}
+			else
+			{
+				withkey += " . '" + field + "=' . $" + field + " ";
+			}
+			
+			if (i < k.length - 1) withkey += " . ' and '";
+		}
+		where = " . ' where '" + withkey;
+	}
+	
+	w = formatWhere(w,t);
+	
+	if (w != 'N/A')
+	{
+		if (where == '') 
+		{
+			where += " . ' where ' . '('";
+		} 
+		else 
+		{
+			where += " . ' and ' . '('";
+		}
+		where += " . '" + w + "' . ')'";
+	}
+	myY += where;
+	
+	start = l[0];
+	limit = l[1];
+	
+	var keys = getAllKeys(t);
+	if (keys.length > 0)
+	{
+		myY += " . ' ORDER BY ";
+		for(i=0;i<keys.length;i++) {
+			field = keys[i];
+			myY += field;
+			if (i < keys.length - 1) myY += ", ";
+		}
+		myY += "'";
+	}
+	
+	if (limit != 'N/A' || start != 'N/A')
+	{
+		myY += " . ' LIMIT ' ";
+		if (start != 'N/A')
+		{
+			myY += ". " + start + " .','";
+		}
+		if (limit != 'N/A')
+		{
+			myY += ". " + limit;
+		}
+	}
+
+	myY += ";\n";
+	
+	myY += "var_dump($query);\n";
+	
+	myY += "$result = mysql_query($query); \n"; 	
+	myY += "$IO_ERR = mysql_error(); \n"; 	
+	myY += "$IO_ROWS = mysql_affected_rows(); \n"; 
+	myY += "while ($record = mysql_fetch_array($result)) \n";
+	myY += "{{ \n";
+	myY += "foreach($record as $key => $value) { \n";
+	myY += "$key = strtoupper($key); \n";
+	myY += "${$key} = $value; \n";
+	myY += "} \n";
+	return myY ;
+}
+function l_fetch(t,f,w,k,s)
+{
+	add_files_stack(t);
+	
+	var i = 0;
+	var field = '';
+	var fields = '';
+	var where = '';
+	var withkey = '';
+	
+	if (f == '*ALL')
+	{
+		fields = '*'
+	}
+	
+	for(i=0;i<f.length;i++) {
+		field = f[i][0];
+		fields += field;
+		if (i < f.length - 1) fields += ',';
+		if (inSubr == "Y" && subroutine_id_stack.indexOf(field) == -1) subroutine_id_stack.push(field);   	
+		if (inSubr == "N" && main_body_id_stack.indexOf(field) == -1) main_body_id_stack.push(field);   	
+	}
+
+	
+	var myY = "$query";
+	myY += " = ";
+	myY += "'";			
+	myY += "select ";
+	myY += fields;
+	myY += " from ";
+	myY += t;
+	myY += "'";
+		
+	if (k != 'N/A')
+	{
+		for(i=0;i<k.length;i++) {
+			field = k[i][0];
+			if (inSubr == "Y" && subroutine_id_stack.indexOf(field) == -1) subroutine_id_stack.push(field);   	
+			if (inSubr == "N" && main_body_id_stack.indexOf(field) == -1) main_body_id_stack.push(field);   	
+			var is_string = findFieldType(field,t);
+			if (is_string == true)
+			{
+				withkey += " . '" + field + "=' . '\\'' . $" + field + " . '\\''";
+			}
+			else
+			{
+				withkey += " . '" + field + "=' . $" + field + " ";
+			}
+			
+			if (i < k.length - 1) withkey += " . ' and '";
+		}
+		where = " . ' where '" + withkey;
+	}
+	
+	w = formatWhere(w,t);
+	
+	if (w != 'N/A')
+	{
+		if (where == '') 
+		{
+			where += " . ' where ' . '('";
+		} 
+		else 
+		{
+			where += " . ' and ' . '('";
+		}
+		where += " . '" + w + "' . ')'";
+	}
+	myY += where + " . ' LIMIT 1';\n";
+	
+	myY += "var_dump($query);\n";
+	
+	myY += "$result = mysql_query($query); \n"; 	
+	myY += "$IO_ROWS = mysql_affected_rows(); \n";
+	myY += "$IO_ERR = mysql_error(); \n"; 	 	
+	myY += "while ($record = mysql_fetch_array($result)) \n";
+	myY += "{ \n";
+	myY += "foreach($record as $key => $value) { \n";
+	myY += "$key = strtoupper($key); \n";
+	myY += "${$key} = $value; \n";
+	myY += "}} \n";
+	
+	myY += "if ($result == FALSE) \n";
+	myY += "{ $IO_STS = 'ER'; } \n";
+	myY += "else \n";
+	myY += "{ $IO_STS = 'OK'; } \n";
+	if (s != '*STATUS' && s != 'N/A') {
+		myY += "$" + s + " = $IO_STS; \n";
+		if (inSubr == "Y" && subroutine_id_stack.indexOf(s) == -1) subroutine_id_stack.push(s);   	
+		if (inSubr == "N" && main_body_id_stack.indexOf(s) == -1) main_body_id_stack.push(s);   	
+	}
+	return myY ;
+}
+
+function l_delete(t,w,k,s)
+{
+	add_files_stack(t);
+
+	var i = 0;
+	var where = '';
+	var withkey = '';
+	
+	var myY = "$query";
+	myY += " = ";
+	myY += "'";			
+	myY += "delete ";
+	myY += " from ";
+	myY += t;
+	myY += "'";
+		
+	if (k != 'N/A')
+	{
+		for(i=0;i<k.length;i++) {
+			field = k[i][0];
+			if (inSubr == "Y" && subroutine_id_stack.indexOf(field) == -1) subroutine_id_stack.push(field);   	
+			if (inSubr == "N" && main_body_id_stack.indexOf(field) == -1) main_body_id_stack.push(field);   	
+			var is_string = findFieldType(field,t);
+			if (is_string == true)
+			{
+				withkey += " . '" + field + "=' . '\\'' . $" + field + " . '\\''";
+			}
+			else
+			{
+				withkey += " . '" + field + "=' . $" + field + " ";
+			}
+			
+			if (i < k.length - 1) withkey += " . ' and '";
+		}
+		where = " . ' where '" + withkey;
+	}
+	
+	w = formatWhere(w,t);
+	
+	if (w != 'N/A')
+	{
+		if (where == '') 
+		{
+			where += " . ' where ' . '('";
+		} 
+		else 
+		{
+			where += " . ' and ' . '('";
+		}
+		where += " . '" + w + "' . ')'";
+	}
+	myY += where + " . ' LIMIT 1';\n";
+	
+	myY += "var_dump($query);\n";
+	
+	myY += "$result = mysql_query($query); \n"; 			
+	myY += "$IO_ROWS = mysql_affected_rows(); \n"; 	
+	myY += "$IO_ERR = mysql_error(); \n"; 	
+	myY += "if ($result == FALSE) \n";
+	myY += "{ $IO_STS = 'ER'; } \n";
+	myY += "else \n";
+	myY += "{ $IO_STS = 'OK'; } \n";
+	if (s != '*STATUS' && s != 'N/A') {
+		myY += "$" + s + " = $IO_STS; \n";
+		if (inSubr == "Y" && subroutine_id_stack.indexOf(s) == -1) subroutine_id_stack.push(s);   	
+		if (inSubr == "N" && main_body_id_stack.indexOf(s) == -1) main_body_id_stack.push(s);   	
+	}
+	return myY ;
+}
+
+function l_update(t,f,k,s)
+{
+	add_files_stack(t);
+
+	var i = 0;
+	var fields = '';
+	var field = '';
+	var set = '';
+	var where = '';
+	var withkey = '';
+	var is_string = '';
+
+	var myY = "$query";
+	myY += " = ";
+	myY += "'";			
+	myY += "update ";
+	myY += t;
+	myY += " set '";
+	
+	if (f == '*ALL')
+	{
+		f = getAllFields(t);
+	}
+	
+	for(i=0;i<f.length;i++) {
+		field = f[i];
+		if (inSubr == "Y" && subroutine_id_stack.indexOf(field) == -1) subroutine_id_stack.push(field);   	
+		if (inSubr == "N" && main_body_id_stack.indexOf(field) == -1) main_body_id_stack.push(field);
+		is_string = findFieldType(field,t);
+		if (is_string == true)
+		{
+			set += " . '" + field + "=' . '\\'' . $" + field + " . '\\''";
+		}
+		else
+		{
+			set += " . '" + field + "=' . $" + field + " ";
+		}
+		if (i < f.length - 1) set += " . ', '";
+	}
+	
+	myY += set;
+		
+	if (k != 'N/A')
+	{
+		for(i=0;i<k.length;i++) {
+			field = k[i][0];
+			if (inSubr == "Y" && subroutine_id_stack.indexOf(field) == -1) subroutine_id_stack.push(field);   	
+			if (inSubr == "N" && main_body_id_stack.indexOf(field) == -1) main_body_id_stack.push(field);   	
+			is_string = findFieldType(field,t);
+			if (is_string == true)
+			{
+				withkey += " . '" + field + "=' . '\\'' . $" + field + " . '\\''";
+			}
+			else
+			{
+				withkey += " . '" + field + "=' . $" + field + " ";
+			}
+			
+			if (i < k.length - 1) withkey += " . ' and '";
+		}
+		where = " . ' where '" + withkey;
+	}
+	
+	myY += where + " . ' LIMIT 1';\n";
+	
+	myY += "var_dump($query);\n";
+	
+	myY += "$result = mysql_query($query); \n"; 			
+	myY += "$IO_ROWS = mysql_affected_rows(); \n"; 
+	myY += "$IO_ERR = mysql_error(); \n"; 	
+	myY += "if ($result == FALSE) \n";
+	myY += "{ $IO_STS = 'ER'; } \n";
+	myY += "else \n";
+	myY += "{ $IO_STS = 'OK'; } \n";
+	if (s != '*STATUS' && s != 'N/A') {
+		myY += "$" + s + " = $IO_STS; \n";
+		if (inSubr == "Y" && subroutine_id_stack.indexOf(s) == -1) subroutine_id_stack.push(s);   	
+		if (inSubr == "N" && main_body_id_stack.indexOf(s) == -1) main_body_id_stack.push(s);   	
+	}
+	return myY ;
+}
+
+function l_insert(t,f,s)
+{
+
+	//INSERT INTO nfl_player_defense 
+	//(season_id, player_id, player_name, nfl_team_id, nfl_team_id3, position_id ) 
+	//VALUES ( "2", "999", "smith", "1", "CHI", "WR")
+
+	add_files_stack(t);
+
+	var i = 0;
+	var fields = '';
+	var field = '';
+	var flds = '';
+	var vals = ''; 
+	var is_string = '';
+
+	var myY = "$query";
+	myY += " = ";
+	myY += "'";			
+	myY += "insert INTO ";
+	myY += t;
+		
+	var f = getAllFields(t);
+
+	for(i=0;i<f.length;i++) {
+		field = f[i];
+		if (inSubr == "Y" && subroutine_id_stack.indexOf(field) == -1) subroutine_id_stack.push(field);   	
+		if (inSubr == "N" && main_body_id_stack.indexOf(field) == -1) main_body_id_stack.push(field);
+		is_string = findFieldType(field,t);
+		flds += field;
+		if (is_string == true)
+		{
+			vals += ". '\\'' . $" + field + " . '\\''";
+		}
+		else
+		{
+			vals += ". $" + field;
+		}
+		if (i < f.length - 1) flds += ", ";
+		if (i < f.length - 1) vals += " . ', '";
+	}
+	
+	myY += " (" + flds + ") VALUES ('" + vals + " . ')'; \n";
+	
+	myY += "var_dump($query);\n";
+	
+	myY += "$result = mysql_query($query); \n"; 			
+	myY += "$IO_ROWS = mysql_affected_rows(); \n"; 
+	myY += "$IO_ERR = mysql_error(); \n"; 	
+	myY += "if ($result == FALSE) \n";
+	myY += "{ $IO_STS = 'ER'; } \n";
+	myY += "else \n";
+	myY += "{ $IO_STS = 'OK'; } \n";
+	if (s != '*STATUS' && s != 'N/A') {
+		myY += "$" + s + " = $IO_STS; \n";
+		if (inSubr == "Y" && subroutine_id_stack.indexOf(s) == -1) subroutine_id_stack.push(s);   	
+		if (inSubr == "N" && main_body_id_stack.indexOf(s) == -1) main_body_id_stack.push(s);   	
+	}
+	return myY ;
+
+}
+
+function l_internal()
+{
+	return '$_i_';
+}
+function l_and(x,y)
+{
+	return '(' + x + '&&' + y + ')';
+}
+function l_or(x,y)
+{
+	return '(' + x + '||' + y + ')';
+}
+function l_comp(x,o,y)
+{
+	return '(' + x + o + y + ')';
+}
+function l_add(x,y)
+{
+	return '(' + x + '+' + y + ')';
+}
+function l_sub(x,y)
+{
+	return '(' + x + '-' + y + ')';
+}
+function l_mul(x,y)
+{
+	return '(' + x + '*' + y + ')';
+}
+function l_div(x,y)
+{
+	return '(' + x + '/' + y + ')';
+}
+function l_if(x)
+{
+	return 'if ' + x + ' {';
+}
+function l_else()
+{
+	return '} else {';
+}
+function l_endif()
+{
+	return '}';
+}
+function print_id(x)
+{
+	return 'echo ' + x + ',"<br>\\n";'  ;
+}
+function assign(x,y)
+{
+	return x + '=' + y + ';' ;
+}
+function l_leave(x)
+{
+	var myX = ''; 
+	if (x == 'N/A')
+	{
+		myX += "break; \n";
+	}
+	else
+	{
+		myX += "if " + x + "break; \n";
+	}
+	return myX;
+}
+function l_continue(x)
+{
+	var myX = ''; 
+	if (x == 'N/A')
+	{
+		myX += "continue; \n";
+	}
+	else
+	{
+		myX += "if " + x + "continue; \n";
+	}
+	return myX;
+}
+function change(x,y)
+{
+	var myX = ''; 
+	for(i=0;i<x.length;i++)
+	{
+		myX += x[i] + '=' + y + ';' ; 
+	} 
+	return myX;
+}
+function call_function(f)
+{
+	var myY = 'func_call(' + f.toLowerCase() + '); \n'; 
+	myY += '_get_exchange(); \n';
+	return myY;
+}
+function begin_loop(u,f,t,s)
+{
+	return 'for (' + u + '=' + f + '; ' + u + '<=' + t + '; ' + u + '+=' + s + ') {' ;
+}
+function end_loop()
+{
+	return '}' ;
+}
+function dountil(x)
+{
+	dowhilestack.push(x); 		// this is global
+	return 'do {';
+}
+function enduntil()
+{
+	return '} while (!' + dowhilestack.pop() + ');' ;		
+}
+function dowhile(x)
+{
+	return 'while ' + x + ' {' ;
+}
+function endwhile()
+{
+	return '}' ;
+}
+function selectlist(x,c)
+{
+	var myY = global_list(x);												// check for subroutine - need global list and counter
+	
+	myY += "foreach($" + x + " as $_" + x + "_ptr => $_" + x + "_row) { \n";
+	myY += "    foreach($_" + x  + "_row as $_" + x + "_key => $_" + x + "_value) { \n";
+	myY += "       ${$_" + x + "_key} = $_" + x + "_value; \n";
+	myY += "    } \n";
+	myY += "    if " + c + "{ \n";
+	return myY ;
+}
+function exchange(f)
+{
+	var myY = '$_sub_parms = array(';
+	for(i=0;i<f.length;i++) {
+		var fldName = f[i][0];
+		var varName = '$' + fldName;
+		myY += "'" + fldName + "' => " + varName;
+		if (i < f.length - 1) myY += ',';
+	}
+	myY += '); \n';
+	myY += '_exchange($_sub_parms); \n';
+	return myY;
+}
+function sort_list(x,f)
+{
+	var myY = global_list(x);												// check for subroutine - need global list and counter
+	
+	myY += "$" + x + " = array_orderby($" + x;
+	for(i=0;i<f.length;i++) {
+		var fldName = f[i][0];
+		var varName = '$' + fldName;
+		var attrArray = f[i].slice(1);
+		myY += ",'" + fldName + "'" ;
+		if (attrArray.indexOf("*DESCEND") != -1) {
+			myY += ",SORT_DESC" ;
+		}
+		else {
+			myY += ",SORT_ASC" ;
+		}
+	}
+	myY += "); \n";
+		
+	// $data = array_orderby($data, 'volume', SORT_DESC, 'edition', SORT_ASC);
+	return myY ;
+}
+function loc_entry(x,c,n,s,r)
+{
+	var myY = global_list(x);												// check for subroutine - need global list and counter
+	
+	myY += "foreach($" + x + " as $_" + x + "_ptr => $_" + x + "_row) { \n";
+	myY += "    foreach($_" + x  + "_row as $_" + x + "_key => $_" + x + "_value) { \n";
+	myY += "       ${'_backup'.$_" + x + "_key} = ${$_" + x + "_key}; \n";
+	myY += "    } \n";
+	myY += "    foreach($_" + x  + "_row as $_" + x + "_key => $_" + x + "_value) { \n";
+	myY += "       ${$_" + x + "_key} = $_" + x + "_value; \n";
+	myY += "    } \n";
+	myY += "    if " + c + "{ \n";
+	myY += "        $IO_STS = 'OK'; \n";
+	if (s != '*STATUS') {
+		myY += "        " + s + " = $IO_STS; \n";
+	}
+	if (n != '*NONE') {
+		myY += "        " + n + " = $_" + x + "_ptr + 1; \n";
+	}
+	if (r != '*YES') {
+		myY += "        foreach($_" + x  + "_row as $_" + x + "_key => $_" + x + "_value) { \n";
+		myY += "           ${$_" + x + "_key} = ${'_backup'.$_" + x + "_key}; \n";
+		myY += "        } \n";
+	}
+	myY += "        break; \n";
+	myY += "    } \n";
+	myY += "    else \n";
+	myY += "    { \n";
+	myY += "        $IO_STS = 'NR'; \n";
+	if (s != '*STATUS') {
+		myY += "        " + s + " = $IO_STS; \n";
+	}
+	myY += "        foreach($_" + x  + "_row as $_" + x + "_key => $_" + x + "_value) { \n";
+	myY += "           ${$_" + x + "_key} = ${'_backup'.$_" + x + "_key}; \n";
+	myY += "        } \n";
+	myY += "    } \n";
+	myY += "} \n";
+	
+	return myY ;
+}
+function get_entry(x,n,s)
+{
+	var myY = global_list(x);												// check for subroutine - need global list and counter
+	
+	myY += "if (array_key_exists(" + n + "-1,$" + x + ")) { \n"; 
+	myY += "$_" + x + "_row = $" + x + "[" + n + "-1]; \n";
+	myY += "$_" + x + "_ptr = " + n + "-1; \n";
+	myY += "    foreach($_" + x  + "_row as $_" + x + "_key => $_" + x + "_value) { \n";
+	myY += "       ${$_" + x + "_key} = $_" + x + "_value; \n";
+	myY += "    } \n";
+	myY += "$IO_STS = 'OK'; \n";
+	myY += "} \n";
+	myY += "else \n";
+	myY += "{ \n";
+	myY += "$IO_STS = 'NR'; \n";
+	myY += "} \n";
+	
+	
+	if (s != '*STATUS')
+	{
+		myY += s + "=$IO_STS; \n";
+	}
+	return myY ;
+}
+function dlt_entry(x,c)
+{
+	var myY = global_list(x);												// check for subroutine - need global list and counter
+	
+	var local_def_list = new Array();							// local def list array
+	var array_name    = 'N/A';									// assume error
+	
+	for(i=0;i<def_list_stack.length;i++) {						// find the correct DEF_LIST array in the global array
+		local_def_list = def_list_stack[i];						// get next LIST off array
+		array_name = local_def_list[0];							// get the LIST name
+		if (array_name == x) break;								// found it?
+		array_name = 'N/A';										// reset error
+	}
+
+	if (array_name == 'N/A') return 'ERROR ==> DLT_ENTRY LIST(' + x + ') not defined yet - must be defined before DLT_ENTRY \n';
+	
+	var array_counter = local_def_list[1];						// counter name, if applicable (not N/A)
+	
+	//unset($LIST1[0]);
+	//$LIST1 = array_values($LIST1);
+	//$LISTCOUNT1 = count($LIST1);
+	
+	if (c == '*CURRENT')
+	{
+		myY  += "unset($" + x + "[$_" + x + "_ptr]); \n";
+	}
+	else
+	{
+		myY  += "unset($" + x + "[" + c + " - 1]); \n";
+	}
+
+	myY += "$" + x  + "= array_values($" + x + "); \n";
+	
+	if (array_counter != 'N/A') myY += '$' + array_counter + '--;\n';	// increment the LIST COUNTER
+	
+	return myY ;
+}
+function endselect()
+{
+	var myY = "    } \n";
+	myY += "} \n";
+	return myY;
+}
+function global_list(x)
+{
+	// do the check no matter what
+	var local_def_list = new Array();									// local def list array
+	var array_name    = 'N/A';											// assume error
+	
+	for(i=0;i<def_list_stack.length;i++) {								// find the correct DEF_LIST array in the global array
+		local_def_list = def_list_stack[i];								// get next LIST off array
+		array_name = local_def_list[0];									// get the LIST name
+		if (array_name == x) break;										// found it?
+		array_name = 'N/A';												// reset error
+	}
+
+	if (array_name == 'N/A') return 'ERROR ==> list ' + x + ' not not found in global_list(x) - no DEF_LIST for this LIST \n';		
+
+	if (inSubr == "Y") 
+	{
+		var array_counter = local_def_list[1];								// counter name, if applicable (not N/A)
+		
+		// push all fields in the list onto the global id list for subroutine
+		for(i=2;i<local_def_list.length;i++) {										
+			var listField = local_def_list[i][0];							
+			if (subroutine_id_stack.indexOf(listField) == -1) subroutine_id_stack.push(listField);
+		}
+		
+		// save the counter name for global definition in subroutine 	
+		if (array_counter != 'N/A' && subroutine_id_stack.indexOf(array_counter) == -1) subroutine_id_stack.push(array_counter);   
+		
+		// save the list name for global definition in subroutine
+		if (subroutine_lists.indexOf(x) == -1) subroutine_lists.push(x);  	
+		
+		return '';
+	}
+	if (inSubr == "N") 
+	{
+		var array_counter = local_def_list[1];								// counter name, if applicable (not N/A)
+		
+		// push all fields in the list onto the global id list for subroutine
+		for(i=2;i<local_def_list.length;i++) {										
+			var listField = local_def_list[i][0];							
+			if (main_body_id_stack.indexOf(listField) == -1) main_body_id_stack.push(listField);
+		}
+		
+		// save the counter name for global definition in subroutine 	
+		if (array_counter != 'N/A' && main_body_id_stack.indexOf(array_counter) == -1) main_body_id_stack.push(array_counter);   
+		
+		// save the list name for global definition in subroutine
+		if (main_body_lists.indexOf(x) == -1) main_body_lists.push(x);  	
+		
+		return '';
+	}
+}
+function inz_list(x,e)
+{
+	var myY = global_list(x);												// check for subroutine - need global list and counter
+
+	var local_def_list = new Array();							// local def list array
+	var array_name    = 'N/A';									// assume error
+	
+	for(i=0;i<def_list_stack.length;i++) {						// find the correct DEF_LIST array in the global array
+		local_def_list = def_list_stack[i];						// get next LIST off array
+		array_name = local_def_list[0];							// get the LIST name
+		if (array_name == x) break;								// found it?
+		array_name = 'N/A';										// reset error
+	}
+
+	if (array_name == 'N/A') return 'ERROR ==> ADD_ENTRY LIST(' + x + ') not defined yet - must be defined before ADD_ENTRY \n';
+	
+	var array_counter = local_def_list[1];						// counter name, if applicable (not N/A)
+	
+	myY += '$' + x + '=clearList($' + x + '); \n';						// Clear The List
+	if (array_counter != 'N/A') myY += '$' + array_counter + ' = 0;\n';		// reset the LIST COUNTER
+	
+	var myX = '$' + x + '[] = array(';							// spin the fields list, build array add row statement
+	for(i=2;i<local_def_list.length;i++) {										
+		myX += "'" + local_def_list[i][0] + "' => ''";								
+		if (i < local_def_list.length - 1) myX += ',';
+	}
+	myX += ');\n';
+	
+	myY += 'for ($_i=1; $_i<=' + e + '; $_i+=1) {\n' ;
+	myY += myX;
+	if (array_counter != 'N/A') myY += '$' + array_counter + '++;\n';	
+	myY += '}';
+	
+	return myY;
+}
+function clr_list(x)
+{
+	var myY = global_list(x);												// check for subroutine - need global list and counter
+
+	var local_def_list = new Array();							// local def list array
+	var array_name    = 'N/A';									// assume error
+	
+	for(i=0;i<def_list_stack.length;i++) {						// find the correct DEF_LIST array in the global array
+		local_def_list = def_list_stack[i];						// get next LIST off array
+		array_name = local_def_list[0];							// get the LIST name
+		if (array_name == x) break;								// found it?
+		array_name = 'N/A';										// reset error
+	}
+
+	if (array_name == 'N/A') return 'ERROR ==> CLR_LIST LIST(' + x + ') not defined yet - must be defined before CLR_LIST \n';
+	
+	var array_counter = local_def_list[1];						// counter name, if applicable (not N/A)
+
+	// OLD LOGIC
+	// var myY = 'unset($' + x + '); \n';						// Clear The List
+	// myY += '$' + x + '[] = array(); \n';
+	// myY += 'unset($' + x + '[0]);\n';
+	// NEW LOGIC
+	// e.g. --> $LIST1=clearList($LIST1);
+	myY += '$' + x + '=clearList($' + x + '); \n';							// Clear The List
+	
+	// e.g. --> $LISTCOUNT1=0;
+	if (array_counter != 'N/A') myY += '$' + array_counter + ' = 0;\n';	// reset the LIST COUNTER
+	
+	return myY;
+}
+function def_list(x,y,c)
+{
+																// [listname counter [field1 attr1 attr2] [f2 a1 a2] etc....]
+	var local_def_list = new Array();							// local def list array
+	local_def_list.push(x);										// push name
+	local_def_list.push(c);										// push counter (or N/A)
+	
+    var myY = '// $' + x + '[] = array(';						// spin the fields list
+	for(i=0;i<y.length;i++) {										
+		myY += "'" + y[i][0] + "' => " + i.toString();								
+		if (i < y.length - 1) myY += ',';
+		local_def_list.push(y[i]);								// push the fields
+	}
+	myY += ');\n';
+	
+	if (c != 'N/A')												// initialize LIST COUNTER
+	{
+		myY += '// $' + c + '=0;\n';
+	}
+	
+	def_list_stack.push(local_def_list);						// push the local array onto global def_list array list
+	
+	global_list(x);												// check for subroutine - need global list and counter
+	
+	return myY;
+}
+function add_entry(x)
+{													
+	var myY = global_list(x);												// check for subroutine - need global list and counter
+
+	var local_def_list = new Array();							// local def list array
+	var array_name    = 'N/A';									// assume error
+	
+	for(i=0;i<def_list_stack.length;i++) {						// find the correct DEF_LIST array in the global array
+		local_def_list = def_list_stack[i];						// get next LIST off array
+		array_name = local_def_list[0];							// get the LIST name
+		if (array_name == x) break;								// found it?
+		array_name = 'N/A';										// reset error
+	}
+
+	if (array_name == 'N/A') return 'ERROR ==> ADD_ENTRY LIST(' + x + ') not defined yet - must be defined before ADD_ENTRY \n';
+	
+	var array_counter = local_def_list[1];						// counter name, if applicable (not N/A)
+	
+	myY += '$' + x + '[] = array(';							// spin the fields list
+	for(i=2;i<local_def_list.length;i++) {										
+		myY += "'" + local_def_list[i][0] + "' => $" + local_def_list[i][0];								
+		if (i < local_def_list.length - 1) myY += ',';
+	}
+	myY += ');\n';
+	
+	if (array_counter != 'N/A') myY += '$' + array_counter + '++;\n';	// increment the LIST COUNTER
+	
+	return myY;
+}
+function upd_entry(x)
+{													
+	var myY = global_list(x);												// check for subroutine - need global list and counter
+
+	var local_def_list = new Array();							// local def list array
+	var array_name    = 'N/A';									// assume error
+	
+	for(i=0;i<def_list_stack.length;i++) {						// find the correct DEF_LIST array in the global array
+		local_def_list = def_list_stack[i];						// get next LIST off array
+		array_name = local_def_list[0];							// get the LIST name
+		if (array_name == x) break;								// found it?
+		array_name = 'N/A';										// reset error
+	}
+
+	if (array_name == 'N/A') return 'ERROR ==> UPD_ENTRY IN_LIST(' + x + ') not defined yet - must be defined before ADD_ENTRY \n';
+	
+	myY += '$' + x + '[$_' + x + '_ptr] = array(';							// spin the fields list
+	for(i=2;i<local_def_list.length;i++) {										
+		myY += "'" + local_def_list[i][0] + "' => $" + local_def_list[i][0];								
+		if (i < local_def_list.length - 1) myY += ',';
+	}
+	myY += ');\n';
+	
+	return myY;
+}
+function subroutine2(x,y)
+{
+    inSubr = "Y";													// this is global - turn on subroutine flag
+	
+	subroutine_func_def = 'function ' + x + '(';					// cache the subroutine function definition
+//	for(i=0;i<y.length;i++) {										// x = subroutine name
+//	    subroutine_func_def += y[i];								// y = array of parameters
+//		if (i < y.length - 1) subroutine_func_def += ',';
+//	}
+	subroutine_func_def += '$_sub_parms) { \n';
+	
+	subroutine_return = y;											// this is global - cache the required return parameters
+	
+	for (var i=0; i<subroutine_return.length; i++) {				// subroutine_id_stack is global
+		subroutine_id_stack.push(subroutine_return[i].slice(1));	// add the return parms to the global id list
+	}																// push unconditionally, array should be empty now 
+	
+	return '';
+}
+function subroutine(x)
+{
+    inSubr = "Y";												// this is global - turn on subroutine flag
+	subroutine_func_def = 'function ' + x + '() { \n';			// cache the subroutine name
+	return '';
+}
+function endroutine()
+{
+	inSubr = "F";												// this is global - set the finish flag
+	
+	var myY = subroutine_func_def;								// output function definition
+	
+	myY += "global $IO_STS; \n";
+	myY += "global $IO_ROWS; \n";
+	myY += "global $IO_ERR; \n";
+	
+	for (var i=0; i<subroutine_id_stack.length; i++) {			// output global variable name definitions (to put all variable in subroutine in global namespace)
+		myY += "global $" + subroutine_id_stack[i] + " ; \n";
+	}
+	
+	for (var i=0; i<subroutine_lists.length; i++) {				// output global list name definitions (to put all lists in subroutine in global namespace)
+		myY += "global $" + subroutine_lists[i] + " ; \n";
+		myY += "global $_" + subroutine_lists[i] + "_ptr ; \n";
+	}
+	
+	myY += 'list(';												// set the parms passed into function from the parm list
+	for (var i=0; i<subroutine_return.length; i++) {			
+		myY += subroutine_return[i];
+		if (i < subroutine_return.length - 1) myY += ',';
+	}
+	myY += ')=$_sub_parms; \n';
+	
+	myY += subroutine_body;										// output the cached subroutine body
+	
+	myY += 'return array(';										// output the cached return variables
+	for (var i=0; i<subroutine_return.length; i++) {			
+		myY += subroutine_return[i];
+		if (i < subroutine_return.length - 1) myY += ',';
+	}
+	myY += '); \n';
+																	
+	myY += '}';
+	subroutine_id_stack = new Array();							// clear id global array 
+	subroutine_return   = new Array();							// clear return parm array
+	subroutine_body = '';										// clear the cached subroutine body
+	subroutine_lists = new Array();								// clear the cached def_list names
+	return myY;
+}
+function execute2(x,y)
+{
+	var myY = '$_sub_parms = array(';							// build parms list for subroutine
+	for(i=0;i<y.length;i++) {
+	    myY += y[i];
+		if (i < y.length - 1) myY += ',';
+	}
+	myY += ');\n'
+
+	myY += 'list(';												// build return variables
+	for(i=0;i<y.length;i++) {
+	    myY += y[i];
+		if (i < y.length - 1) myY += ',';
+	}
+	myY += ')=';
+	myY += x + '($_sub_parms);';								// build function call
+	return myY;
+}
+function execute(x)
+{
+	return x + '();';
+}
+function error(x)
+{
+	return '//ERROR -> ' + x + '\n';
+}
+function comment(x)
+{
+	return '/* comment ->' + x + '*/' + '\n';
+}
+function ida(x,y)
+{
+	// debug_stuff += "X: " + x + "\n";										
+	// debug_stuff += "Y: " + y.toSource() + "\n";										
+		
+	if (inSubr == "Y" && subroutine_id_stack.indexOf(x) == -1) subroutine_id_stack.push(x);   	// if in subroutine save id
+	if (inSubr == "N" && main_body_id_stack.indexOf(x) == -1) main_body_id_stack.push(x);   	// if in main save id
+	
+	var field_array = new Array(x);				// convert field to array
+	field_array = field_array.concat(y);		// add on the attributes array
+	
+	// debug_stuff += "FIELD_ARRAY: " + field_array.toSource() + "\n";
+	
+	variablestack_attr.push(field_array);		// save the array onto field list for screen generation later on
+												// not currently used !!!!!
+		
+	return field_array; 
+	
+	// return '$' + x;
+}
+function id(x)
+{
+	if (inSubr == "Y" && subroutine_id_stack.indexOf(x) == -1) subroutine_id_stack.push(x);   	// if currently in a subroutine save the id
+	if (inSubr == "N" && main_body_id_stack.indexOf(x) == -1) main_body_id_stack.push(x);   	// if in main save id
+	
+	return '$' + x;
+}
+function L_send_top()
+{
+	inSubr 					= "N";				// global subroutine switch
+	dowhilestack 			= new Array();		// global stack for building nested dowhiles
+    variablestack 			= new Array();      // global stack for caching screen fields
+	variablestack_attr		= new Array();      // global stack for caching screen fields (with attributes)
+	subroutine_id_stack 	= new Array();		// global stack to save all id's referenced in a subroutine (to put in global namespace)
+	subroutine_body 		= new String();     // global string to save the body of a subroutine until endroutine reached
+	subroutine_func_def  	= new String();     // global string to save the subroutine function definition until endroutine reached
+	subroutine_return       = new Array();      // global stack to save return parms for subroutine
+	subroutine_lists        = new Array();      // global stack to save lists (for global namespace definitions)
+	
+												// Currently there are TWO LOCATIONS where we might output the main_body
+												// depending if there are subroutines or not !
+												
+	main_body				= new String();		// global string to save the main function body
+	main_body_id_stack 		= new Array();		// global stack to save all id's referenced in main (to put in global namespace)
+	main_body_lists        	= new Array();      // global stack to save lists (for global namespace definitions)
+	def_list_stack			= new Array();		// global stack to save list definitions
+	def_list_screen   		= new Array();		// global stack to save lists for screen
+	
+	fields_stack            = new Array();		// global list of fields in defines
+	files_stack	            = new Array();		// global defines for files - use to do the global
+	tables	    		    = new Array();		// datbase table definitions
+	tfields			        = new Array();		// temp use
+	
+	
+	debug_stuff             = new String();		// global debug stuff
+	
+	var myY = "<?php \n";
+	myY += "namespace " + theScriptName + "; \n";	
+    myY += "include_once('tbs_class.php'); \n";	
+	myY += "include_once('ll_library.php'); \n";	
+	myY += "_On_Entry(" + theScriptName + "); \n";   
+	return myY;
+}
+function L_send_bottom()
+{
+	var myY = '\n'; 
+	
+	// send Main
+	
+	myY += "function _Main() { \n";   
+	
+	// myY += "global $_tables; \n";
+	// for (var i=0; i<files_stack.length; i++) {					// output files definitions
+	// 	myY += "include_once('OAM_" + files_stack[i] + ".php'); \n";
+	// }
+	
+	myY += "global $CurrentScript; \n";
+	myY += "global $CurrentTemplate; \n";	
+	myY += "global $IO_STS; \n";
+	myY += "global $IO_ROWS; \n";
+	myY += "global $IO_ERR; \n";
+	myY += "global $_Lists; \n";
+
+	// remove lists from id stack - only need 1 global definition
+	for(i=0;i<main_body_lists.length;i++) {							// spin the DEF_LIST array
+		var array_name = main_body_lists[i];						// get next DEF_LIST off array
+		for (var j=0; j<main_body_id_stack.length; j++) {
+			var fldName = main_body_id_stack[j];
+			if (array_name == fldName) {
+				main_body_id_stack.splice(j,1);						// remove DEF_LIST name from variablestack
+				break;									
+			}
+		}
+	}
+
+	for (var i=0; i<main_body_id_stack.length; i++) {				// output global variables
+		myY += "global $" + main_body_id_stack[i] + " ; \n";
+	}
+	for (var i=0; i<main_body_lists.length; i++) {					// output global lists
+		myY += "global $" + main_body_lists[i] + " ; \n";
+		myY += "global $_" + main_body_lists[i] + "_ptr ; \n";
+	}
+	
+	// php list array with list names and list counters
+	var local_def_list = new Array();						// local def list array
+	var array_counter = 'N/A';								// counter name, if applicable (not N/A)	
+	array_name    = 'N/A';									// assume error
+	
+	if (def_list_stack.length > 0)
+	{
+		myY += '$_Lists[] = array(';		
+		for(i=0;i<def_list_stack.length;i++) {						// find the correct DEF_LIST array in the global array
+			local_def_list = def_list_stack[i];						// get next LIST off array
+			array_name = local_def_list[0];							// get the LIST name
+			array_counter = local_def_list[1];						// counter name, if applicable (not N/A)	
+			myY += "'" + array_name + "' => '" + array_counter + "'); \n"; 
+		}
+	}
+	
+	myY += '_get_exchange(); \n';									// output main body
+	
+	myY += main_body;
+	myY += '} \n';			
+
+	myY += '\n'; 
+	
+	var fldName = '';						// field name
+	var varName = '';						// field variable name
+	var attrArray = new Array();			// field attribute array
+	
+	var inpField = new Boolean(); 			// on screen flag	
+	var lowerCase = new Boolean();          // lower case input 
+
+	// myY += 	'function Init_Fields() { \n';   
+	myY += 	'function _Get_Post() { \n';   
+	
+	// this is in library function now
+	// myY +=   'global $CurrentScript; \n';
+	// myY +=   'global $CurrentTemplate; \n';
+	// myY +=   '$CurrentScript = basename(__FILE__); \n';
+	// myY +=   '$CurrentTemplate = basename(__FILE__,".php").".html"; \n';
+	
+	// global definitions
+	for (var i=0; i<variablestack.length; i++) {
+		fldName = variablestack[i][0];
+		varName = '$' + fldName;
+		attrArray = variablestack[i].slice(1);
+		myY += "global " + varName + " ; \n";
+	}
+	
+	// global List and List Counter definitions
+	for(i=0;i<def_list_screen.length;i++) {						// spin the DEF_LIST array/
+		var local_def_list = def_list_screen[i];				// get next DEF_LIST off array
+		var array_name = local_def_list[0];						// get the LIST name
+		myY += "global $" + array_name + " ; \n";
+		var list_counter = local_def_list[1];
+		if (list_counter != 'N/A') {							// there is a counter field
+			var found_match = 'N';
+		    for (var j=0; j<variablestack.length; j++) {		// verify not in the request stmt already to avoid emitting 2 global definitions
+				fldName = variablestack[j][0];
+				if (list_counter == fldName) {
+					found_match = 'Y';
+					break;									
+				}
+			}
+			if (found_match == 'N') {							// not found so include global definition
+				myY	+= "global $" + list_counter + " ; \n";
+			}
+		}
+	}
+	
+	// initialize
+	for (var i=0; i<variablestack.length; i++) {
+		fldName = variablestack[i][0];
+		varName = '$' + fldName;
+		attrArray = variablestack[i].slice(1);
+		myY += varName + " = '' ; \n";
+	}
+	
+	// extract from post
+	for (var i=0; i<variablestack.length; i++) {
+		fldName = variablestack[i][0];
+		varName = '$' + fldName;
+		attrArray = variablestack[i].slice(1);
+		inpField = true;
+		lowerCase = false;
+		if (attrArray.indexOf("*IN")   != -1) inpField = true;
+		if (attrArray.indexOf("*HIDE") != -1) inpField = true;
+		if (attrArray.indexOf("*OUT")  != -1) inpField = false;
+		if (attrArray.indexOf("*LC")   != -1) lowerCase = true;
+		if (inpField == true) {
+		   if (lowerCase == true)  myY += "if (isset($_POST['" + fldName + "'])) " + varName + " = $_POST['" + fldName + "']; \n";
+		   if (lowerCase == false) myY += "if (isset($_POST['" + fldName + "'])) " + varName + " = strtoupper($_POST['" + fldName + "']); \n";
+		}
+	}
+
+	// extract lists from POST data / the getPostedList routine does all the work
+		
+// $field_array = array(array($field,$atr1,$atr2, etc...))
+// list($LIST,$listcount) = get_posted_list($listname,$field_array)
+
+	// Setup Call to LIST POST EXTRACT ROUTINE
+	// Setup fields array
+	for(i=0;i<def_list_screen.length;i++) {					// spin the DEF_LIST array
+		local_def_list = def_list_screen[i];				// get next DEF_LIST off array
+		array_name = local_def_list[0];						// get the LIST name
+		myY += 'unset($_field_array); \n';
+		for (var j=2; j<local_def_list.length; j++) {
+			myY += '$_field_array[] = array(';
+			for (var k=0; k <local_def_list[j].length; k++) {
+				fldName = local_def_list[j][k];
+				myY += "'" + fldName + "'";
+				if (k < local_def_list[j].length - 1) myY += ',';
+			}
+			myY += ');\n';
+		}
+		myY += "list($" + array_name + ",$_" + array_name + "_listcount) = getPostedList('" + array_name + "',$_field_array); \n";
+	}
+	
+	// after executing each list will have an internal list count name
+	// emit code to set the global listcounter if there is one
+	for(i=0;i<def_list_screen.length;i++) {						// spin the DEF_LIST array/
+		local_def_list = def_list_screen[i];					// get next DEF_LIST off array
+		array_name = local_def_list[0];							// get the LIST name
+		list_counter = local_def_list[1];
+		if (list_counter != 'N/A') {
+			myY += "$" + list_counter + " = $_" + array_name + "_listcount; \n";
+		}
+	}
+	
+	// myY += "print_r($_POST); \n";		// debug stuff, dump post array
+	myY += 'echo "<br>"; \n';
+	
+	myY += ' } \n ?> \n';
+	
+	// myY+= "DEBUG_STUFF==>\n" + debug_stuff + "\n";
+	// myY+= "VARIABLESTACK_ATTR:" + variablestack_attr.toSource() + "\n";
+	
+	return myY;
+}
+function L_emit_field(x)
+{
+	var myY  = "";
+	
+	// new section...cache fields in symbol table for init routine at end
+	// myY+= "LIST_TO_L_EMIT_FIELDS:" + x.toSource() + "\n";
+	for(i=0;i<x.length;i++) {
+	    var fname = x[i];
+		variablestack.push(fname);   // is global
+	}
+	
+	// remove lists from variable stack - we will output those later
+	var local_def_list = new Array();							
+	var array_name    = '';										
+	for(i=0;i<def_list_stack.length;i++) {						// spin the DEF_LIST array
+		local_def_list = def_list_stack[i];						// get next DEF_LIST off array
+		array_name = local_def_list[0];							// get the LIST name
+		for (var j=0; j<variablestack.length; j++) {
+			fldName = variablestack[j][0];
+			if (array_name == fldName) {
+				variablestack.splice(j,1);						// remove DEF_LIST name from variablestack
+				def_list_screen.push(local_def_list);			// copy DEF_LIST definition to screen list array
+				break;									
+			}
+		}
+	}
+
+	// Build the Tiny Bit Strong Template Calls
+	myY += "$TBS = new \\clsTinyButStrong;\n";
+	myY += "$TBS->SetOption('noerr', false);\n";
+	myY += "$TBS->LoadTemplate($CurrentTemplate);\n";
+	
+	// Build each list call
+	var local_def_list = new Array();							
+	var array_name    = '';										
+	for(i=0;i<def_list_screen.length;i++) {						// spin the DEF_LIST array
+		local_def_list = def_list_screen[i];					// get next DEF_LIST off array
+		array_name = local_def_list[0];							// get the LIST name
+		myY += "$TBS->MergeBlock('" + array_name + "',$" + array_name + ");\n";
+	}
+	
+	myY += "$TBS->Show();\n";
+	myY += "exit(); \n"; 
+	
+	
+	return myY;
+}
