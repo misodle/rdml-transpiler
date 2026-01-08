@@ -4,8 +4,14 @@ set /p Html= Compile HTML (Yes/No)?
 call:toLower ProgramName
 
 @ECHO ON
-js z_compile1.js %ProgramName% < %ProgramName%.txt > %ProgramName%.php 
-if /i (%Html%)==(yes) (js z_compile2.js %ProgramName% < %ProgramName%.txt > %ProgramName%.html)
+"%~dp0..\spidermonkey\js.exe" "%~dp0z_compile1.js" %ProgramName% < %ProgramName%.txt > %ProgramName%.php 
+
+@ECHO OFF
+if /i (%Html%)==(y) set "Html=yes"
+
+@ECHO ON
+if /i (%Html%)==(yes) ("%~dp0..\spidermonkey\js.exe" "%~dp0z_compile2.js" %ProgramName% < %ProgramName%.txt > %ProgramName%.html)
+
 @ECHO OFF
 echo.
 pause "press enter"

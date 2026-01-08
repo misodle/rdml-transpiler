@@ -1,1 +1,11 @@
-this is a test
+print('what is 1/4 * 8?')
+
+if (#answer ^= '')
+	if (#answer = (1/4) * 8 )
+		PRINT('THAT WAS THE ANSWER')
+	ELSE
+		PRINT("THAT'S NOT IT DUMMY")
+	endif
+endif
+
+Request Fields(#answer)
