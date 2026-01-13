@@ -1,0 +1,24 @@
+
+if cond(#compile = "YES")
+	if cond(#file_name = *blanks)
+		print("Must ENTER file name")
+	else
+		print("Creating OAM")
+		execute subroutine(Create_OAM) with_parms(#file_name)
+	endif
+else
+	print("ENTER FILE NAME and YES to compile")
+endif
+
+Request Fields((#file_name *in) (#compile *in)) 
+
+subroutine name(Create_OAM) parms(#file_name)
+
+/* Uncomment the next line after compiling */
+/* This will call library routine to write the OAM to disk */
+
+/*	_Create_OAM($FILE_NAME);   */
+
+
+endroutine 
+

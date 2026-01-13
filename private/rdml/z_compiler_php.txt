@@ -372,10 +372,10 @@ function l_select(t,f,w,k,o,l)
 	
 	myY += "var_dump($query);\n";
 	
-	myY += "$result = mysql_query($query); \n"; 	
-	myY += "$IO_ERR = mysql_error(); \n"; 	
-	myY += "$IO_ROWS = mysql_affected_rows(); \n"; 
-	myY += "while ($record = mysql_fetch_array($result)) \n";
+	myY += "$result = mysqli_query($conID,$query); \n"; 	
+	myY += "$IO_ERR = mysqli_error($conID); \n"; 	
+	myY += "$IO_ROWS = mysqli_affected_rows($conID); \n"; 
+	myY += "while ($record = mysqli_fetch_array($result, MYSQLI_BOTH)) \n";
 	myY += "{{ \n";
 	myY += "foreach($record as $key => $value) { \n";
 	myY += "$key = strtoupper($key); \n";
@@ -455,10 +455,10 @@ function l_fetch(t,f,w,k,s)
 	
 	myY += "var_dump($query);\n";
 	
-	myY += "$result = mysql_query($query); \n"; 	
-	myY += "$IO_ROWS = mysql_affected_rows(); \n";
-	myY += "$IO_ERR = mysql_error(); \n"; 	 	
-	myY += "while ($record = mysql_fetch_array($result)) \n";
+	myY += "$result = mysqli_query($conID,$query); \n"; 	
+	myY += "$IO_ROWS = mysqli_affected_rows($conID); \n";
+	myY += "$IO_ERR = mysqli_error($conID); \n"; 	 	
+	myY += "while ($record = mysqli_fetch_array($result, MYSQLI_BOTH)) \n";
 	myY += "{ \n";
 	myY += "foreach($record as $key => $value) { \n";
 	myY += "$key = strtoupper($key); \n";
@@ -532,9 +532,9 @@ function l_delete(t,w,k,s)
 	
 	myY += "var_dump($query);\n";
 	
-	myY += "$result = mysql_query($query); \n"; 			
-	myY += "$IO_ROWS = mysql_affected_rows(); \n"; 	
-	myY += "$IO_ERR = mysql_error(); \n"; 	
+	myY += "$result = mysqli_query($conID,$query); \n"; 			
+	myY += "$IO_ROWS = mysqli_affected_rows($conID); \n"; 	
+	myY += "$IO_ERR = mysqli_error($conID); \n"; 	
 	myY += "if ($result == FALSE) \n";
 	myY += "{ $IO_STS = 'ER'; } \n";
 	myY += "else \n";
@@ -614,9 +614,9 @@ function l_update(t,f,k,s)
 	
 	myY += "var_dump($query);\n";
 	
-	myY += "$result = mysql_query($query); \n"; 			
-	myY += "$IO_ROWS = mysql_affected_rows(); \n"; 
-	myY += "$IO_ERR = mysql_error(); \n"; 	
+	myY += "$result = mysqli_query($conID,$query); \n"; 			
+	myY += "$IO_ROWS = mysqli_affected_rows($conID); \n"; 
+	myY += "$IO_ERR = mysqli_error($conID); \n"; 	
 	myY += "if ($result == FALSE) \n";
 	myY += "{ $IO_STS = 'ER'; } \n";
 	myY += "else \n";
@@ -675,9 +675,9 @@ function l_insert(t,f,s)
 	
 	myY += "var_dump($query);\n";
 	
-	myY += "$result = mysql_query($query); \n"; 			
-	myY += "$IO_ROWS = mysql_affected_rows(); \n"; 
-	myY += "$IO_ERR = mysql_error(); \n"; 	
+	myY += "$result = mysqli_query($conID,$query); \n"; 			
+	myY += "$IO_ROWS = mysqli_affected_rows($conID); \n"; 
+	myY += "$IO_ERR = mysqli_error($conID); \n"; 	
 	myY += "if ($result == FALSE) \n";
 	myY += "{ $IO_STS = 'ER'; } \n";
 	myY += "else \n";
@@ -1333,6 +1333,7 @@ function L_send_bottom()
 	// 	myY += "include_once('OAM_" + files_stack[i] + ".php'); \n";
 	// }
 	
+	myY += "global $conID; \n";
 	myY += "global $CurrentScript; \n";
 	myY += "global $CurrentTemplate; \n";	
 	myY += "global $IO_STS; \n";

@@ -1,0 +1,35 @@
+Def_List Name(#list1) Fields((#season_id *out)(#player_id *out) (#player_name *out) (#nfl_team_id *out)(#nfl_team_id3 *out)(#position_id *out)) Counter(#LISTCOUNT1) 
+
+#limit := 20
+
+if cond(#std_button = 'DETAIL')
+	exchange fields(#start #std_button #season_id #player_id)
+	call function(func_detail) 
+endif
+
+if cond(#std_button = 'FIRST')
+	#start := 0
+endif
+if cond(#std_button = 'PREV')
+	#start := #start - #limit
+endif
+if cond(#std_button = 'NEXT')
+	#start := #start + #limit
+endif
+if cond(#std_button = 'LAST')
+	#start := 0
+	Select Fields(*all) From_File(nfl_player_defense) 
+		#start := #start + 1
+	endselect
+	#start := #start - #limit
+endif
+
+if cond(#start <= 0)
+#start := 0
+endif
+
+Select Fields(*all) From_File(nfl_player_defense) limit(#start,#limit)
+	add_entry to_list(#list1)
+endselect
+		
+Request Fields((#season_id *hide) (#player_id *hide) (#std_button *hide) (#start *hide) #list1 )  
