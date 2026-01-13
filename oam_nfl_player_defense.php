@@ -1,0 +1,34 @@
+<?php 
+unset($_fields); 
+unset($_attrs); 
+$_attrs['FIELD'] = 'SEASON_ID'; 
+$_attrs['TYPE'] = 'DECIMAL(4,0)'; 
+$_attrs['KEY']  = 'PRI'; 
+$_fields['SEASON_ID'] = $_attrs; 
+unset($_attrs); 
+$_attrs['FIELD'] = 'PLAYER_ID'; 
+$_attrs['TYPE'] = 'SMALLINT(5) UNSIGNED'; 
+$_attrs['KEY']  = 'PRI'; 
+$_fields['PLAYER_ID'] = $_attrs; 
+unset($_attrs); 
+$_attrs['FIELD'] = 'PLAYER_NAME'; 
+$_attrs['TYPE'] = 'VARCHAR(25)'; 
+$_attrs['KEY']  = ''; 
+$_fields['PLAYER_NAME'] = $_attrs; 
+unset($_attrs); 
+$_attrs['FIELD'] = 'NFL_TEAM_ID'; 
+$_attrs['TYPE'] = 'SMALLINT(5) UNSIGNED'; 
+$_attrs['KEY']  = ''; 
+$_fields['NFL_TEAM_ID'] = $_attrs; 
+unset($_attrs); 
+$_attrs['FIELD'] = 'NFL_TEAM_ID3'; 
+$_attrs['TYPE'] = 'CHAR(3)'; 
+$_attrs['KEY']  = ''; 
+$_fields['NFL_TEAM_ID3'] = $_attrs; 
+unset($_attrs); 
+$_attrs['FIELD'] = 'POSITION_ID'; 
+$_attrs['TYPE'] = 'CHAR(2)'; 
+$_attrs['KEY']  = ''; 
+$_fields['POSITION_ID'] = $_attrs; 
+$_tables['nfl_player_defense'] = $_fields; 
+?> 

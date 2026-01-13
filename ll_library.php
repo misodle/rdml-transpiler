@@ -1,19 +1,21 @@
 <?php
 
-function _Create_OAM_PHP($table) {
+function _Create_OAM_PHP($table) {	
+	global $conID;
+
 	$table = strtolower($table);
 	$query = 'SHOW COLUMNS FROM '.$table;
-	$result = mysql_query($query);
+	$result = mysqli_query($conID,$query);
 	if (!$result) {
-			echo 'Could not run query: ' . mysql_error();
+			echo 'Could not run query: ' . mysqli_error($conID);
 			exit;
 	}
 	
 	$response = "<?php \n";
 	$response .= "unset(\$_fields); \n";
-	if (mysql_num_rows($result) > 0) 
+	if (mysqli_num_rows($result) > 0) 
 	{
-		while ($row = mysql_fetch_assoc($result)) 
+		while ($row = mysqli_fetch_assoc($result)) 
 		{
 			$response .=  "unset(\$_attrs); \n";
 			$fld_name = strtoupper($row["Field"]);
@@ -36,19 +38,21 @@ function _Create_OAM_PHP($table) {
 }
 
 function _Create_OAM_JS($table) {
+	global $conID;
+
 	$table = strtolower($table);
 	$query = 'SHOW COLUMNS FROM '.$table;
-	$result = mysql_query($query);
+	$result = mysqli_query($conID,$query);
 	if (!$result) {
-			echo 'Could not run query: ' . mysql_error();
+			echo 'Could not run query: ' . mysqli_error($conID);
 			exit;
 	}
 	
 	$response = "// " . $table . "; \n";
 	$response .= "tfields.length = 0; \n";
-	if (mysql_num_rows($result) > 0) 
+	if (mysqli_num_rows($result) > 0) 
 	{
-		while ($row = mysql_fetch_assoc($result)) 
+		while ($row = mysqli_fetch_assoc($result)) 
 		{
 			$fld_name = strtoupper($row["Field"]);
 			$fld_type = strtoupper($row["Type"]);
@@ -67,7 +71,6 @@ function _Create_OAM_JS($table) {
 	
 	file_put_contents($table,$response);
 }
-
 
 function _On_Entry($pgm) {
 	global $First_Time;
@@ -148,7 +151,7 @@ function func_call($pgm)
 			unset($GLOBALS[$GLOBALS_ptr]);
 		}
 		if ($GLOBALS_ptr != 'GLOBALS' && $GLOBALS_ptr != '_GET' && $GLOBALS_ptr != '_POST' && $GLOBALS_ptr != '_COOKIE' && 
-			$GLOBALS_ptr != '_FILES' && $GLOBALS_ptr != '_SERVER' && $GLOBALS_ptr != 'First_Time' && $GLOBALS_ptr != '_Exchange_List' ) 
+			$GLOBALS_ptr != '_FILES' && $GLOBALS_ptr != '_SERVER' && $GLOBALS_ptr != 'conID' && $GLOBALS_ptr != 'First_Time' && $GLOBALS_ptr != '_Exchange_List'  ) 
 		{	
 			$_SAVE[$GLOBALS_ptr] = $GLOBALS_row;
 			$GLOBALS[$GLOBALS_ptr] = NULL;
@@ -254,14 +257,10 @@ function DBConnect()
 {
 
 	global $body;
+	global $conID;
 
 	// setup database connection info
 	
-	/* $host = "localhost";
-	$user = "root";
-	$pwd = "sql413";
-	$dbase = "ffdev"; */
-
 	// load .env.local (key=value format) into $_ENV
 	foreach (parse_ini_file(__DIR__ . '/.env.local') as $k => $v) {
     	$_ENV[$k] = $v;
@@ -274,8 +273,7 @@ function DBConnect()
 	$dbase = $_ENV['DB_NAME'];
 	
 	// connect to mysql server (persistent)
-	$conID = mysql_pconnect($host,$user,$pwd);   // this is not possible in mysli extension
-	//$conID = mysql_connect($host,$user,$pwd);
+	$conID = mysqli_connect($host, $user, $pwd);
 	if ($conID == FALSE)
 	{
 		$body .= "Failed to connect to database server. This is a fatal error.<br>\n";
@@ -284,7 +282,7 @@ function DBConnect()
 
 	// connect to database
 	//$curDB = mysql_select_db($dbase);
-	$curDB = mysql_select_db($dbase,$conID);
+	$curDB = mysqli_select_db($conID, $dbase);
 	if ($curDB == FALSE)	
 	{
 		$body .= "Failed to connect to named database. This is a fatal error.<br>\n";

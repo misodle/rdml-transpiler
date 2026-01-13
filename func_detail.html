@@ -1,0 +1,86 @@
+<html>
+
+<head>
+    <script type="text/javascript" src="ll_library.js"></script>
+</head>
+
+<body>
+    <img src="images/lansagif.gif">
+    <form name="FORM" action="[onshow.CurrentScript]" method="POST">
+        <table>
+            <tr>
+                <th> </th>
+                <th> </th>
+                <th> </th>
+            </tr>
+            <tr>
+                <td>START</td>
+                <td></td>
+                <td>
+                <td><input type="hidden" name="START" value="[onshow.START]"></td>
+            </tr>
+            <tr>
+                <td>STD_BUTTON</td>
+                <td></td>
+                <td>
+                <td><input type="hidden" name="STD_BUTTON" value="[onshow.STD_BUTTON]"></td>
+            </tr>
+            <tr>
+                <td>IO_STS</td>
+                <td></td>
+                <td>
+                <td>[onshow.IO_STS]</td>
+            </tr>
+            <tr>
+                <td>IO_ERR</td>
+                <td></td>
+                <td>
+                <td>[onshow.IO_ERR]</td>
+            </tr>
+            <tr>
+                <td>SEASON_ID</td>
+                <td></td>
+                <td>
+                <td><input type="text" name="SEASON_ID" value="[onshow.SEASON_ID]"></td>
+            </tr>
+            <tr>
+                <td>PLAYER_ID</td>
+                <td></td>
+                <td>
+                <td><input type="text" name="PLAYER_ID" value="[onshow.PLAYER_ID]"></td>
+            </tr>
+            <tr>
+                <td>PLAYER_NAME</td>
+                <td></td>
+                <td>
+                <td><input type="text" name="PLAYER_NAME" value="[onshow.PLAYER_NAME]"></td>
+            </tr>
+            <tr>
+                <td>NFL_TEAM_ID</td>
+                <td></td>
+                <td>
+                <td><input type="text" name="NFL_TEAM_ID" value="[onshow.NFL_TEAM_ID]"></td>
+            </tr>
+            <tr>
+                <td>NFL_TEAM_ID3</td>
+                <td></td>
+                <td>
+                <td><input type="text" name="NFL_TEAM_ID3" value="[onshow.NFL_TEAM_ID3]"></td>
+            </tr>
+            <tr>
+                <td>POSITION_ID</td>
+                <td></td>
+                <td>
+                <td><input type="text" name="POSITION_ID" value="[onshow.POSITION_ID]"></td>
+            </tr>
+        </table>
+        <input type="button" value="Go Back" onclick="javascript:SetPgm('GOBACK');">
+        <input type="button" value="Update" onclick="javascript:SetPgm('UPDATE');">
+        <input type="button" value="Insert" onclick="javascript:SetPgm('INSERT');">
+        <input type="button" value="Delete" onclick="javascript:SetPgm('DELETE');">
+        <br><br>
+        <a href="func_detail.txt" target="_blank">RDML Code</a>
+    </form>
+</body>
+
+</html>

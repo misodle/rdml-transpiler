@@ -1,0 +1,26 @@
+
+if cond(#std_button = 'DETAIL')
+	fetch Fields(#season_id #player_id #player_name #nfl_team_id #nfl_team_id3 #position_id) From_File(nfl_player_defense) with_key(#season_id #player_id)	
+endif
+
+if cond(#std_button = 'UPDATE')
+	update Fields(*ALL) in_File(nfl_player_defense) with_key(#season_id #player_id)
+endif
+
+if cond(#std_button = 'INSERT')
+	insert fields(*ALL) to_file(nfl_player_defense)
+endif
+
+if cond(#std_button = 'DELETE')
+	delete From_File(nfl_player_defense) with_key(#season_id #player_id)
+endif
+
+if cond(#std_button = 'GOBACK')
+	EXCHANGE FIELDS(#start #std_button)
+	call function(func_list)
+endif
+
+#std_Button := ' '
+
+Request Fields((#start *hide)(#std_button *hide)(#IO_STS *OUT)(#IO_ERR *OUT)(#season_id *in)(#player_id *in)(#player_name *in *LC)(#nfl_team_id *in)(#nfl_team_id3 *in)(#position_id *in) )  
+
