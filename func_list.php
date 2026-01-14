@@ -4,7 +4,7 @@ namespace func_list;
 
 include_once('tbs_class.php');
 include_once('ll_library.php');
-_On_Entry(func_list);
+_On_Entry('func_list');
 
 function _Main()
 {
@@ -37,7 +37,7 @@ function _Main()
         $_sub_parms = array('START' => $START, 'STD_BUTTON' => $STD_BUTTON, 'SEASON_ID' => $SEASON_ID, 'PLAYER_ID' => $PLAYER_ID);
         _exchange($_sub_parms);
 
-        func_call(func_detail);
+        func_call('func_detail');
         _get_exchange();
     }
     if ($STD_BUTTON == 'FIRST') {

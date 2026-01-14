@@ -4,8 +4,7 @@ namespace func_detail;
 
 include_once('tbs_class.php');
 include_once('ll_library.php');
-
-_On_Entry(func_detail);
+_On_Entry('func_detail');
 
 function _Main()
 {
@@ -85,7 +84,7 @@ function _Main()
         $_sub_parms = array('START' => $START, 'STD_BUTTON' => $STD_BUTTON);
         _exchange($_sub_parms);
 
-        func_call(func_list);
+        func_call('func_list');
         _get_exchange();
     }
     $STD_BUTTON = ' ';

@@ -4,10 +4,11 @@ namespace test;
 
 include_once('tbs_class.php');
 include_once('ll_library.php');
-_On_Entry(test);
+_On_Entry('test');
 
 function _Main()
 {
+    global $conID;
     global $CurrentScript;
     global $CurrentTemplate;
     global $IO_STS;
