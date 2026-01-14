@@ -780,7 +780,7 @@ function change(x,y)
 }
 function call_function(f)
 {
-	var myY = 'func_call(' + f.toLowerCase() + '); \n'; 
+	var myY = "func_call('" + f.toLowerCase() + "'); \n"; 
 	myY += '_get_exchange(); \n';
 	return myY;
 }
