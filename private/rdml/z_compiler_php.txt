@@ -1317,7 +1317,7 @@ function L_send_top()
 	myY += "namespace " + theScriptName + "; \n";	
     myY += "include_once('tbs_class.php'); \n";	
 	myY += "include_once('ll_library.php'); \n";	
-	myY += "_On_Entry(" + theScriptName + "); \n";   
+	myY += "_On_Entry('" + theScriptName + "'); \n";   
 	return myY;
 }
 function L_send_bottom()
