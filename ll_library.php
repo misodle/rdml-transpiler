@@ -102,7 +102,7 @@ function _get_exchange()
 {
 	global $_Exchange_List;
 	global $_Lists;
-	if (count($_Exchange_List) <= 0)
+	if (count($_Exchange_List ?? []) <= 0)
 	{
 		return;
 	}
