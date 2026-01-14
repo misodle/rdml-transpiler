@@ -1,17 +1,19 @@
 <?php
-/*
-********************************************************
-TinyButStrong - Template Engine for Pro and Beginners
-------------------------
-Version  : 3.8.0 for PHP 5
-Date     : 2012-03-04
-Web site : http://www.tinybutstrong.com
-Author   : http://www.tinybutstrong.com/onlyyou.html
-********************************************************
-This library is free software.
-You can redistribute and modify it even for commercial usage,
-but you must accept and respect the LPGL License version 3.
-*/
+/**
+ *
+ * TinyButStrong - Template Engine for Pro and Beginners
+ *
+ * @version 3.15.1 for PHP 5, 7, 8
+ * @date    2023-05-15
+ * @link    http://www.tinybutstrong.com Web site
+ * @author  http://www.tinybutstrong.com/onlyyou.html
+ * @license http://opensource.org/licenses/LGPL-3.0 LGPL-3.0
+ *
+ * This library is free software.
+ * You can redistribute and modify it even for commercial usage,
+ * but you must accept and respect the LPGL License version 3.
+ */
+
 // Check PHP version
 if (version_compare(PHP_VERSION,'5.0')<0) echo '<br><b>TinyButStrong Error</b> (PHP Version Check) : Your PHP version is '.PHP_VERSION.' while TinyButStrong needs PHP version 5.0 or higher. You should try with TinyButStrong Edition for PHP 4.';
 
@@ -27,6 +29,7 @@ define('TBS_ISINSTALLED', -3);
 // *********************************************
 
 class clsTbsLocator {
+
 	public $PosBeg = false;
 	public $PosEnd = false;
 	public $Enlarged = false;
@@ -36,6 +39,7 @@ class clsTbsLocator {
 	public $SubLst = array();
 	public $SubNbr = 0;
 	public $PrmLst = array();
+	public $PrmPos; // positions of the parameters, if asked
 	public $PrmIfNbr = false;
 	public $MagnetId = false;
 	public $BlockFound = false;
@@ -44,6 +48,101 @@ class clsTbsLocator {
 	public $ConvStr = true;
 	public $ConvMode = 1; // Normal
 	public $ConvBr = true;
+	
+	// Compatibility with PHP 8.2
+	public $Prop = array(); // dynamic properties, used by OpenTBS
+	
+	public $Ope;
+	public $OpeEnd;
+	public $PosNext;
+	public $PrmIf;
+	public $PrmThen;
+	public $PrmThenVar;
+	public $PrmIfVar;
+	public $PrmElseVar;
+
+	// other
+	public $ConvEsc;
+	public $ConvWS;
+	public $ConvJS;
+	public $ConvUrl;
+	public $ConvUtf8;
+
+	public $OnFrmInfo;
+	public $OnFrmArg;
+	
+	public $OpeUtf8;
+	public $OpeAct;
+	public $OpePrm;
+	public $OpeArg;
+    
+    public $OpeMOK;
+    public $OpeMKO;
+    public $MSave;
+
+	// Sub-template
+	public $SaveSrc;
+	public $SaveMode;
+	public $SaveVarRef;
+	public $SaveRender;
+
+	// Att
+	public $AttForward;
+	public $AttTagBeg;
+	public $AttTagEnd;
+	public $AttDelimChr;
+	public $AttName;
+	public $AttBeg;
+	public $AttEnd;
+	public $AttDelimCnt;
+	public $AttValBeg;
+	public $PosBeg0;
+	public $PosEnd0;
+	public $InsPos;
+	public $InsLen;
+	public $DelPos;
+	public $DelLen;
+	public $PosBeg2;
+	public $PosEnd2;
+
+	// blocks
+	public $P1;
+	public $FieldOutside;
+	public $FOStop;
+	public $BDefLst;
+	public $NoData;
+	public $Special;
+	public $HeaderFound;
+	public $FooterFound;
+	public $SerialEmpty;
+	public $GrpBreak;
+	public $BoundFound;
+	public $CheckNext;
+	public $CheckPrev;
+	public $WhenFound;
+	public $WhenDefault;
+    public $WhenDefaultBeforeNS;
+	public $SectionNbr;
+	public $SectionLst;
+	public $PosDefBeg;
+	public $RightLevel;
+	public $BlockSrc;
+	public $PosDefEnd;
+	public $IsRecInfo;
+	public $RecInfo;
+	public $WhenSeveral;
+	public $WhenNbr;
+	public $WhenLst;
+	public $FooterNbr;
+	public $FooterDef;
+	public $HeaderNbr;
+	public $HeaderDef;
+	public $ValPrev;
+	public $BoundLst;
+	public $BoundNb;
+	public $BoundSingleNb;
+	public $ValNext;
+
 }
 
 // *********************************************
@@ -55,21 +154,44 @@ public $SubType = 0;
 public $SrcId = false;
 public $Query = '';
 public $RecSet = false;
-public $RecKey = '';
-public $RecNum = 0;
-public $RecNumInit = 0;
+public $RecNumInit = 0; // Used by ByPage plugin
 public $RecSaving = false;
 public $RecSaved = false;
 public $RecBuffer = false;
-public $CurrRec = false;
 public $TBS = false;
 public $OnDataOk = false;
 public $OnDataPrm = false;
 public $OnDataPrmDone = array();
 public $OnDataPi = false;
 
+// Info relative to the current record :
+public $CurrRec = false; // Used by ByPage plugin
+public $RecKey = '';     // Used by ByPage plugin
+public $RecNum = 0;      // Used by ByPage plugin
+
+public $PrevRec = null;
+public $NextRec = null;
+
+public $PrevSave = false;
+public $NextSave = false;
+
+// Compatibility with PHP 8.2
+public $Prop = array(); // Used by ByPage plugin
+public $RecNbr;
+public $RSIsFirst;
+public $NumMin;
+public $NumMax;
+public $NumStep;
+public $NumVal;
+public $OnDataPrmRef;
+public $OnDataArgs;
+
 public function DataAlert($Msg) {
-	return $this->TBS->meth_Misc_Alert('when merging block '.$this->TBS->_ChrOpen.$this->TBS->_CurrBlock.$this->TBS->_ChrClose,$Msg);
+	if (is_array($this->TBS->_CurrBlock)) {
+		return $this->TBS->meth_Misc_Alert('when merging block "'.implode(',',$this->TBS->_CurrBlock).'"',$Msg);
+	} else {
+		return $this->TBS->meth_Misc_Alert('when merging block '.$this->TBS->_ChrOpen.$this->TBS->_CurrBlock.$this->TBS->_ChrClose,$Msg);
+	}
 }
 
 public function DataPrepare(&$SrcId,&$TBS) {
@@ -78,7 +200,7 @@ public function DataPrepare(&$SrcId,&$TBS) {
 	$this->TBS = &$TBS;
 	$FctInfo = false;
 	$FctObj = false;
-
+	
 	if (is_array($SrcId)) {
 		$this->Type = 0;
 	} elseif (is_resource($SrcId)) {
@@ -124,6 +246,14 @@ public function DataPrepare(&$SrcId,&$TBS) {
 		$this->Type = 11;
 	} elseif ($SrcId instanceof Zend_Db_Adapter_Abstract) {
 		$this->Type = 12;
+	} elseif ($SrcId instanceof SQLite3) {
+		$this->Type = 13; $this->SubType = 1;
+	} elseif ($SrcId instanceof SQLite3Stmt) {
+		$this->Type = 13; $this->SubType = 2;
+	} elseif ($SrcId instanceof SQLite3Result) {
+		$this->Type = 13; $this->SubType = 3;
+	} elseif (is_a($SrcId, 'Doctrine\DBAL\Connection')) {
+		$this->Type = 14;
 	} elseif (is_object($SrcId)) {
 		$FctInfo = get_class($SrcId);
 		$FctCat = 'o';
@@ -160,17 +290,25 @@ public function DataPrepare(&$SrcId,&$TBS) {
 public function DataOpen(&$Query,$QryPrms=false) {
 
 	// Init values
-	unset($this->CurrRec); $this->CurrRec = true;
+	unset($this->CurrRec);
+	$this->CurrRec = true;
+	
 	if ($this->RecSaved) {
-		$this->FirstRec = true;
+		$this->RSIsFirst = true;
 		unset($this->RecKey); $this->RecKey = '';
 		$this->RecNum = $this->RecNumInit;
 		if ($this->OnDataOk) $this->OnDataArgs[1] = &$this->CurrRec;
 		return true;
 	}
-	unset($this->RecSet); $this->RecSet = false;
+	
+	unset($this->RecSet);
+	$this->RecSet = false;
 	$this->RecNumInit = 0;
 	$this->RecNum = 0;
+
+	// Previous and next records
+	$this->PrevRec = (object) null;
+	$this->NextRec = false;
 
 	if (isset($this->TBS->_piOnData)) {
 		$this->OnDataPi = true;
@@ -187,7 +325,7 @@ public function DataOpen(&$Query,$QryPrms=false) {
 
 	switch ($this->Type) {
 	case 0: // Array
-		if (($this->SubType===1) and (is_string($Query))) $this->SubType = 2;
+		if (($this->SubType===1) && (is_string($Query))) $this->SubType = 2;
 		if ($this->SubType===0) {
 			$this->RecSet = &$this->SrcId;
 		} elseif ($this->SubType===1) {
@@ -215,7 +353,10 @@ public function DataOpen(&$Query,$QryPrms=false) {
 					$i = $this->DataAlert('invalid query \''.$Query.'\' because property ObjectRef is not set.');
 				}
 			} else {
-				if (isset($this->TBS->VarRef[$Item0])) {
+				if ( is_null($this->TBS->VarRef) && isset($GLOBALS[$Item0]) ) {
+					$Var = &$GLOBALS[$Item0];
+					$i = 1;
+				} elseif (isset($this->TBS->VarRef[$Item0])) {
 					$Var = &$this->TBS->VarRef[$Item0];
 					$i = 1;
 				} else {
@@ -224,7 +365,7 @@ public function DataOpen(&$Query,$QryPrms=false) {
 			}
 			// Check sub-items
 			$Empty = false;
-			while (($i!==false) and ($i<$ItemNbr) and ($Empty===false)) {
+			while (($i!==false) && ($i<$ItemNbr) && ($Empty===false)) {
 				$x = $ItemLst[$i];
 				if (is_array($Var)) {
 					if (isset($Var[$x])) {
@@ -233,14 +374,15 @@ public function DataOpen(&$Query,$QryPrms=false) {
 						$Empty = true;
 					}
 				} elseif (is_object($Var)) {
-					$ArgLst = $this->TBS->f_Misc_CheckArgLst($x);
-					if (method_exists($Var,$x)) {
-						$f = array(&$Var,$x); unset($Var);
-						$Var = call_user_func_array($f,$ArgLst);
-					} elseif (property_exists(get_class($Var),$x)) {
-						if (isset($Var->$x)) $Var = &$Var->$x;
-					} elseif (isset($Var->$x)) {
-						$Var = $Var->$x; // useful for overloaded property
+					$form = $this->TBS->f_Misc_ParseFctForm($x);
+					$n = $form['name'];
+					if ( method_exists($Var, $n) || ($form['as_fct'] && method_exists($Var,'__call')) ) {
+						$f = array(&$Var,$n); unset($Var);
+						$Var = call_user_func_array($f,$form['args']);
+					} elseif (property_exists(get_class($Var),$n)) {
+						if (isset($Var->$n)) $Var = &$Var->$n;
+					} elseif (isset($Var->$n)) {
+						$Var = $Var->$n; // useful for overloaded property
 					} else {
 						$Empty = true;
 					}
@@ -263,7 +405,7 @@ public function DataOpen(&$Query,$QryPrms=false) {
 		// First record
 		if ($this->RecSet!==false) {
 			$this->RecNbr = $this->RecNumInit + count($this->RecSet);
-			$this->FirstRec = true;
+			$this->RSIsFirst = true;
 			$this->RecSaved = true;
 			$this->RecSaving = false;
 		}
@@ -305,7 +447,7 @@ public function DataOpen(&$Query,$QryPrms=false) {
 		if (is_string($Query)) {
 			$this->RecSet = &$Query;
 		} else {
-			$this->RecSet = ''.$Query;
+			$this->RecSet = $this->TBS->meth_Misc_ToStr($Query);
 		}
 		break;
 	case 3: // Custom function
@@ -368,9 +510,52 @@ public function DataOpen(&$Query,$QryPrms=false) {
 			$this->DataAlert('Zend_DB_Adapter error message when opening the query: '.$e->getMessage());
 		}
 		break;
+	case 13: // SQLite3
+		try {
+			if ($this->SubType==3) {
+				$this->RecSet = $this->SrcId;
+			} elseif (($this->SubType==1) && (!is_array($QryPrms))) {
+				// SQL statement without parameters
+				$this->RecSet = $this->SrcId->query($Query);
+			} else {
+				if ($this->SubType==2) {
+					$stmt = $this->SrcId;
+					$prms = $Query;
+				} else {
+					// SQL statement with parameters
+					$stmt = $this->SrcId->prepare($Query);
+					$prms = $QryPrms;
+				}
+				// bind parameters
+				if (is_array($prms)) {
+					foreach ($prms as $p => $v) {
+						if (is_numeric($p)) {
+							$p = $p + 1;
+						}
+						if (is_array($v)) {
+							$stmt->bindValue($p, $v[0], $v[1]);
+						} else {
+							$stmt->bindValue($p, $v);
+						}
+					}
+				}
+				$this->RecSet = $stmt->execute();
+			}
+		} catch (Exception $e) {
+			$this->DataAlert('SQLite3 error message when opening the query: '.$e->getMessage());
+		}
+		break;
+	case 14: // Doctrine DBAL
+		try {
+			if (!is_array($QryPrms)) $QryPrms = array();
+			$this->RecSet = $this->SrcId->executeQuery($Query, $QryPrms);
+		} catch (Exception $e) {
+			$this->DataAlert('Doctrine DBAL error message when opening the query: '.$e->getMessage());
+		}
+		break;
 	}
 
-	if (($this->Type===0) or ($this->Type===9)) {
+	if (($this->Type===0) || ($this->Type===9)) {
 		unset($this->RecKey); $this->RecKey = '';
 	} else {
 		if ($this->RecSaving) {
@@ -385,111 +570,31 @@ public function DataOpen(&$Query,$QryPrms=false) {
 
 public function DataFetch() {
 
-	if ($this->RecSaved) {
-		if ($this->RecNum<$this->RecNbr) {
-			if ($this->FirstRec) {
-				if ($this->SubType===2) { // From string
-					reset($this->RecSet);
-					$this->RecKey = key($this->RecSet);
-					$this->CurrRec = &$this->RecSet[$this->RecKey];
-				} else {
-					$this->CurrRec = reset($this->RecSet);
-					$this->RecKey = key($this->RecSet);
-				}
-				$this->FirstRec = false;
-			} else {
-				if ($this->SubType===2) { // From string
-					next($this->RecSet);
-					$this->RecKey = key($this->RecSet);
-					$this->CurrRec = &$this->RecSet[$this->RecKey];
-				} else {
-					$this->CurrRec = next($this->RecSet);
-					$this->RecKey = key($this->RecSet);
-				}
-			}
-			if ((!is_array($this->CurrRec)) and (!is_object($this->CurrRec))) $this->CurrRec = array('key'=>$this->RecKey, 'val'=>$this->CurrRec);
-			$this->RecNum++;
-			if ($this->OnDataOk) {
-				$this->OnDataArgs[1] = &$this->CurrRec; // Reference has changed if ($this->SubType===2)
-				if ($this->OnDataPrm) call_user_func_array($this->OnDataPrmRef,$this->OnDataArgs);
-				if ($this->OnDataPi) $this->TBS->meth_PlugIn_RunAll($this->OnDataPiRef,$this->OnDataArgs);
-				if ($this->SubType!==2) $this->RecSet[$this->RecKey] = $this->CurrRec; // save modifications because array reading is done without reference :(
-			}
-		} else {
-			unset($this->CurrRec); $this->CurrRec = false;
-		}
-		return;
+	// Save previous record
+	if ($this->PrevSave) {
+		$this->_CopyRec($this, $this->PrevRec);
 	}
-
-	switch ($this->Type) {
-	case 6: // MySQL
-		$this->CurrRec = mysql_fetch_assoc($this->RecSet);
-		break;
-	case 1: // Num
-		if (($this->NumVal>=$this->NumMin) and ($this->NumVal<=$this->NumMax)) {
-			$this->CurrRec = array('val'=>$this->NumVal);
-			$this->NumVal += $this->NumStep;
+	
+	if ($this->NextSave) {
+		// set current record
+		if ($this->NextRec === false) {
+			// first record
+			$this->NextRec = (object) array('RecNum' => 1); // prepare for getting properties, RecNum needed for the first fetch
+			$this->_DataFetchOn($this);
 		} else {
-			$this->CurrRec = false;
+			// other records
+			$this->_CopyRec($this->NextRec, $this);
 		}
-		break;
-	case 2: // Text
-		if ($this->RecNum===0) {
-			if ($this->RecSet==='') {
-				$this->CurrRec = false;
-			} else {
-				$this->CurrRec = &$this->RecSet;
-			}
+		// set next record
+		if ($this->CurrRec === false) {
+			// no more record
+			$this->NextRec = (object) null; // clear properties
 		} else {
-			$this->CurrRec = false;
+			$this->_DataFetchOn($this->NextRec);
 		}
-		break;
-	case 3: // Custom function
-		$FctFetch = $this->FctFetch;
-		$this->CurrRec = $FctFetch($this->RecSet,$this->RecNum+1);
-		break;
-	case 4: // Custom method from ObjectRef
-		$this->FctPrm[0] = &$this->RecSet; $this->FctPrm[1] = $this->RecNum+1;
-		$this->CurrRec = call_user_func_array($this->FctFetch,$this->FctPrm);
-		break;
-	case 5: // Custom method of object
-		$this->CurrRec = $this->SrcId->tbsdb_fetch($this->RecSet,$this->RecNum+1);
-		break;
-	case 7: // PostgreSQL
-		$this->CurrRec = pg_fetch_assoc($this->RecSet);
-		break;
-	case 8: // SQLite
-		$this->CurrRec = sqlite_fetch_array($this->RecSet,SQLITE_ASSOC);
-		break;
-	case 9: // Iterator
-		if ($this->RecSet->valid()) {
-			$this->CurrRec = $this->RecSet->current();
-			$this->RecKey = $this->RecSet->key();
-			$this->RecSet->next();
-		} else {
-			$this->CurrRec = false;
-		}
-		break;
-	case 10: // MySQLi
-		$this->CurrRec = $this->RecSet->fetch_assoc();
-		if (is_null($this->CurrRec)) $this->CurrRec = false;
-		break;
-	case 11: // PDO
-		$this->CurrRec = $this->RecSet->fetch(PDO::FETCH_ASSOC);
-		break;
-	case 12: // Zend_DB_Adapater
-		$this->CurrRec = $this->RecSet->fetch(Zend_Db::FETCH_ASSOC);
-		break;
-	}
-
-	// Set the row count
-	if ($this->CurrRec!==false) {
-		$this->RecNum++;
-		if ($this->OnDataOk) {
-			if ($this->OnDataPrm) call_user_func_array($this->OnDataPrmRef,$this->OnDataArgs);
-			if ($this->OnDataPi) $this->TBS->meth_PlugIn_RunAll($this->OnDataPiRef,$this->OnDataArgs);
-		}
-		if ($this->RecSaving) $this->RecBuffer[$this->RecKey] = $this->CurrRec;
+	} else {
+		// Classic fetch
+		$this->_DataFetchOn($this);
 	}
 
 }
@@ -506,6 +611,11 @@ public function DataClose() {
 	case 5: $this->SrcId->tbsdb_close($this->RecSet); break;
 	case 7: pg_free_result($this->RecSet); break;
 	case 10: $this->RecSet->free(); break; // MySQLi
+	case 13: // SQLite3
+		if ($this->SubType!=3) {
+			$this->RecSet->finalize();
+		}
+		break;
 	//case 11: $this->RecSet->closeCursor(); break; // PDO
 	}
 	if ($this->RecSaving) {
@@ -514,6 +624,142 @@ public function DataClose() {
 		$this->RecSaving = false;
 		$this->RecSaved = true;
 	}
+}
+
+/**
+ * Copy the record information from an object to another.
+ */
+private function _CopyRec($from, $to) {
+	
+	$to->CurrRec = $from->CurrRec;
+	$to->RecNum  = $from->RecNum;
+	$to->RecKey  = $from->RecKey;
+	
+}
+
+/**
+ * Fetch the next record on the object $obj.
+ * This wil set the proiperties :
+ *   $obj->CurrRec
+ *   $obj->RecKey
+ *   $obj->RecNum
+ */
+private function _DataFetchOn($obj) {
+
+	// Check if the records are saved in an array
+	if ($this->RecSaved) {
+		if ($obj->RecNum < $this->RecNbr) {
+			if ($this->RSIsFirst) {
+				if ($this->SubType===2) { // From string
+					reset($this->RecSet);
+					$obj->RecKey = key($this->RecSet);
+					$obj->CurrRec = &$this->RecSet[$obj->RecKey];
+				} else {
+					$obj->CurrRec = reset($this->RecSet);
+					$obj->RecKey = key($this->RecSet);
+				}
+				$this->RSIsFirst = false;
+			} else {
+				if ($this->SubType===2) { // From string
+					next($this->RecSet);
+					$obj->RecKey = key($this->RecSet);
+					$obj->CurrRec = &$this->RecSet[$obj->RecKey];
+				} else {
+					$obj->CurrRec = next($this->RecSet);
+					$obj->RecKey = key($this->RecSet);
+				}
+			}
+			if ((!is_array($obj->CurrRec)) && (!is_object($obj->CurrRec))) $obj->CurrRec = array('key'=>$obj->RecKey, 'val'=>$obj->CurrRec);
+			$obj->RecNum++;
+			if ($this->OnDataOk) {
+				$this->OnDataArgs[1] = &$obj->CurrRec; // Reference has changed if ($this->SubType===2)
+				if ($this->OnDataPrm) call_user_func_array($this->OnDataPrmRef,$this->OnDataArgs);
+				if ($this->OnDataPi) $this->TBS->meth_PlugIn_RunAll($this->OnDataPiRef,$this->OnDataArgs);
+				if ($this->SubType!==2) $this->RecSet[$obj->RecKey] = $obj->CurrRec; // save modifications because array reading is done without reference :(
+			}
+		} else {
+			unset($obj->CurrRec); $obj->CurrRec = false;
+		}
+		return;
+	}
+
+	switch ($this->Type) {
+	case 6: // MySQL
+		$obj->CurrRec = mysql_fetch_assoc($this->RecSet);
+		break;
+	case 1: // Num
+		if (($this->NumVal>=$this->NumMin) && ($this->NumVal<=$this->NumMax)) {
+			$obj->CurrRec = array('val'=>$this->NumVal);
+			$this->NumVal += $this->NumStep;
+		} else {
+			$obj->CurrRec = false;
+		}
+		break;
+	case 2: // Text
+		if ($obj->RecNum===0) {
+			if ($this->RecSet==='') {
+				$obj->CurrRec = false;
+			} else {
+				$obj->CurrRec = &$this->RecSet;
+			}
+		} else {
+			$obj->CurrRec = false;
+		}
+		break;
+	case 3: // Custom function
+		$FctFetch = $this->FctFetch;
+		$obj->CurrRec = $FctFetch($this->RecSet,$obj->RecNum+1);
+		break;
+	case 4: // Custom method from ObjectRef
+		$this->FctPrm[0] = &$this->RecSet; $this->FctPrm[1] = $obj->RecNum+1;
+		$obj->CurrRec = call_user_func_array($this->FctFetch,$this->FctPrm);
+		break;
+	case 5: // Custom method of object
+		$obj->CurrRec = $this->SrcId->tbsdb_fetch($this->RecSet,$obj->RecNum+1);
+		break;
+	case 7: // PostgreSQL
+		$obj->CurrRec = pg_fetch_assoc($this->RecSet);
+		break;
+	case 8: // SQLite
+		$obj->CurrRec = sqlite_fetch_array($this->RecSet,SQLITE_ASSOC);
+		break;
+	case 9: // Iterator
+		if ($this->RecSet->valid()) {
+			$obj->CurrRec = $this->RecSet->current();
+			$obj->RecKey = $this->RecSet->key();
+			$this->RecSet->next();
+		} else {
+			$obj->CurrRec = false;
+		}
+		break;
+	case 10: // MySQLi
+		$obj->CurrRec = $this->RecSet->fetch_assoc();
+		if (is_null($obj->CurrRec)) $obj->CurrRec = false;
+		break;
+	case 11: // PDO
+		$obj->CurrRec = $this->RecSet->fetch(PDO::FETCH_ASSOC);
+		break;
+	case 12: // Zend_DB_Adapater
+		$obj->CurrRec = $this->RecSet->fetch(Zend_Db::FETCH_ASSOC);
+		break;
+	case 13: // SQLite3
+		$obj->CurrRec = $this->RecSet->fetchArray(SQLITE3_ASSOC);
+		break;
+	case 14: // Doctrine DBAL
+		$obj->CurrRec = $this->RecSet->fetchAssociative();
+		break;
+	}
+
+	// Set the row count
+	if ($obj->CurrRec!==false) {
+		$obj->RecNum++;
+		if ($this->OnDataOk) {
+			if ($this->OnDataPrm) call_user_func_array($this->OnDataPrmRef,$this->OnDataArgs);
+			if ($this->OnDataPi) $this->TBS->meth_PlugIn_RunAll($this->OnDataPiRef,$this->OnDataArgs);
+		}
+		if ($this->RecSaving) $this->RecBuffer[$obj->RecKey] = $obj->CurrRec;
+	}
+
 }
 
 }
@@ -529,23 +775,25 @@ public $TplVars = array();
 public $ObjectRef = false;
 public $NoErr = false;
 public $Assigned = array();
+public $ExtendedMethods = array();
+public $ErrCount = 0;
 // Undocumented (can change at any version)
-public $Version = '3.8.0';
+public $Version = '3.15.0';
 public $Charset = '';
 public $TurboBlock = true;
 public $VarPrefix = '';
 public $VarRef = null;
 public $FctPrefix = '';
 public $Protect = true;
-public $ErrCount = 0;
 public $ErrMsg = '';
 public $AttDelim = false;
 public $MethodsAllowed = false;
+public $ScriptsAllowed = false;
 public $OnLoad = true;
 public $OnShow = true;
 public $IncludePath = array();
-public $ExtendedMethods = array();
 public $TplStore = array();
+public $OldSubTpl = false; // turn to true to have compatibility with the old way to perform subtemplates, that is get output buffuring
 // Private
 public $_ErrMsgName = '';
 public $_LastFile = '';
@@ -559,6 +807,46 @@ public $_ChrProtect = '&#91;';
 public $_PlugIns = array();
 public $_PlugIns_Ok = false;
 public $_piOnFrm_Ok = false;
+
+// Compatibility with PHP 8.2
+private $_UserFctLst;
+private $_Subscript;
+public  $CurrPrm;
+
+private $_piOnData;
+private $_piBeforeLoadTemplate;
+private $_piAfterLoadTemplate;
+private $_piOnMergeField;
+private $_piBeforeShow;
+private $_piAfterShow;
+private $_piOnCommand;
+private $_piOnOperation;
+private $_piOnCacheField;
+private $_PlugIns_Ok_save;
+private $_piOnFrm_Ok_save;
+private $_piOnFormat;
+private $_piBeforeMergeBlock;
+private $_piOnMergeSection;
+private $_piOnMergeGroup;
+private $_piAfterMergeBlock;
+private $_piOnSpecialVar;
+
+// OpenTBS
+public $OtbsAutoLoad;
+public $OtbsConvBr;
+public $OtbsAutoUncompress;
+public $OtbsConvertApostrophes;
+public $OtbsSpacePreserve;
+public $OtbsClearWriter;
+public $OtbsClearMsWord;
+public $OtbsMsExcelConsistent;
+public $OtbsMsExcelExplicitRef;
+public $OtbsClearMsPowerpoint;
+public $OtbsGarbageCollector;
+public $OtbsMsExcelCompatibility;
+public $OtbsCurrFile;
+public $OtbsSubFileLst;
+public $TbsZip;
 
 function __construct($Options=null,$VarPrefix='',$FctPrefix='') {
 
@@ -575,7 +863,7 @@ function __construct($Options=null,$VarPrefix='',$FctPrefix='') {
 				$Err = false;
 			} else {
 				$Pos = strpos($Chrs,',');
-				if (($Pos!==false) and ($Pos>0) and ($Pos<$Len-1)) {
+				if (($Pos!==false) && ($Pos>0) && ($Pos<$Len-1)) {
 					$Options['chr_open']  = substr($Chrs,0,$Pos);
 					$Options['chr_close'] = substr($Chrs,$Pos+1);
 					$Err = false;
@@ -585,17 +873,21 @@ function __construct($Options=null,$VarPrefix='',$FctPrefix='') {
 		}
 	} 
 
+	// Set VarRef initial value
+	$this->ResetVarRef(true);
+	
 	// Set options
-	$this->VarRef =& $GLOBALS;
 	if (is_array($Options)) $this->SetOption($Options);
 
 	// Links to global variables (cannot be converted to static yet because of compatibility)
-	global $_TBS_FormatLst, $_TBS_UserFctLst, $_TBS_BlockAlias, $_TBS_AutoInstallPlugIns;
-	if (!isset($_TBS_FormatLst))  $_TBS_FormatLst  = array();
-	if (!isset($_TBS_UserFctLst)) $_TBS_UserFctLst = array();
-	if (!isset($_TBS_BlockAlias)) $_TBS_BlockAlias = array();
+	global $_TBS_FormatLst, $_TBS_UserFctLst, $_TBS_BlockAlias, $_TBS_PrmCombo, $_TBS_AutoInstallPlugIns, $_TBS_ParallelLst;
+	if (!isset($_TBS_FormatLst))   $_TBS_FormatLst  = array();
+	if (!isset($_TBS_UserFctLst))  $_TBS_UserFctLst = array();
+	if (!isset($_TBS_BlockAlias))  $_TBS_BlockAlias = array();
+	if (!isset($_TBS_PrmCombo))    $_TBS_PrmCombo = array();
+	if (!isset($_TBS_ParallelLst)) $_TBS_ParallelLst = array();
 	$this->_UserFctLst = &$_TBS_UserFctLst;
-	
+
 	// Auto-installing plug-ins
 	if (isset($_TBS_AutoInstallPlugIns)) foreach ($_TBS_AutoInstallPlugIns as $pi) $this->PlugIn(TBS_INSTALL,$pi);
 
@@ -618,6 +910,7 @@ function SetOption($o, $v=false, $d=false) {
 	if (isset($o['var_prefix'])) $this->VarPrefix = $o['var_prefix'];
 	if (isset($o['fct_prefix'])) $this->FctPrefix = $o['fct_prefix'];
 	if (isset($o['noerr'])) $this->NoErr = $o['noerr'];
+	if (isset($o['old_subtemplate'])) $this->OldSubTpl = $o['old_subtemplate'];
 	if (isset($o['auto_merge'])) {
 		$this->OnLoad = $o['auto_merge'];
 		$this->OnShow = $o['auto_merge'];
@@ -628,6 +921,7 @@ function SetOption($o, $v=false, $d=false) {
 	if (isset($o['protect'])) $this->Protect = $o['protect'];
 	if (isset($o['turbo_block'])) $this->TurboBlock = $o['turbo_block'];
 	if (isset($o['charset'])) $this->meth_Misc_Charset($o['charset']);
+
 	$UpdateChr = false;
 	if (isset($o['chr_open'])) {
 		$this->_ChrOpen = $o['chr_open'];
@@ -641,15 +935,19 @@ function SetOption($o, $v=false, $d=false) {
 		$this->_ChrVal = $this->_ChrOpen.'val'.$this->_ChrClose;
 		$this->_ChrProtect = '&#'.ord($this->_ChrOpen[0]).';'.substr($this->_ChrOpen,1);
 	}
-	if (array_key_exists('tpl_frms',$o)) self::f_Misc_UpdateArray($GLOBALS['_TBS_FormatLst'], 'frm', $o['tpl_frms'], $d);
-	if (array_key_exists('block_alias',$o)) self::f_Misc_UpdateArray($GLOBALS['_TBS_BlockAlias'], false, $o['block_alias'], $d);
-	if (array_key_exists('include_path',$o)) self::f_Misc_UpdateArray($this->IncludePath, true, $o['include_path'], $d);
+	if (array_key_exists('tpl_frms',$o))      self::f_Misc_UpdateArray($GLOBALS['_TBS_FormatLst'], 'frm', $o['tpl_frms'], $d);
+	if (array_key_exists('block_alias',$o))   self::f_Misc_UpdateArray($GLOBALS['_TBS_BlockAlias'], false, $o['block_alias'], $d);
+	if (array_key_exists('prm_combo',$o))     self::f_Misc_UpdateArray($GLOBALS['_TBS_PrmCombo'], 'prm', $o['prm_combo'], $d);
+	if (array_key_exists('parallel_conf',$o)) self::f_Misc_UpdateArray($GLOBALS['_TBS_ParallelLst'], false, $o['parallel_conf'], $d);
+	if (array_key_exists('include_path',$o))  self::f_Misc_UpdateArray($this->IncludePath, true, $o['include_path'], $d);
 	if (isset($o['render'])) $this->Render = $o['render'];
+	if (isset($o['methods_allowed'])) $this->MethodsAllowed = $o['methods_allowed'];
+	if (isset($o['scripts_allowed'])) $this->ScriptsAllowed = $o['scripts_allowed'];
 }
 
 function GetOption($o) {
 	if ($o==='all') {
-		$x = explode(',', 'var_prefix,fct_prefix,noerr,auto_merge,onload,onshow,att_delim,protect,turbo_block,charset,chr_open,chr_close,tpl_frms,block_alias,include_path,render');
+		$x = explode(',', 'var_prefix,fct_prefix,noerr,auto_merge,onload,onshow,att_delim,protect,turbo_block,charset,chr_open,chr_close,tpl_frms,block_alias,parallel_conf,include_path,render,prm_combo');
 		$r = array();
 		foreach ($x as $o) $r[$o] = $this->GetOption($o);
 		return $r;
@@ -674,16 +972,89 @@ function GetOption($o) {
 	}
 	if ($o==='include_path') return $this->IncludePath;
 	if ($o==='render') return $this->Render;
+	if ($o==='methods_allowed') return $this->MethodsAllowed;
+	if ($o==='scripts_allowed') return $this->ScriptsAllowed;
+	if ($o==='parallel_conf') return $GLOBALS['_TBS_ParallelLst'];
+	if ($o==='block_alias') return $GLOBALS['_TBS_BlockAlias'];
+	if ($o==='prm_combo') return $GLOBALS['_TBS_PrmCombo'];
 	return $this->meth_Misc_Alert('with GetOption() method','option \''.$o.'\' is not supported.');;
 }
 
 public function ResetVarRef($ToGlobal) {
-	if ($ToGlobal) {
-		$this->VarRef = &$GLOBALS;
+	// We set a new variable in order to force the reference
+	// value NULL means that VarRef refers to $GLOBALS
+	$x = ($ToGlobal) ? null : array();
+	$this->VarRef = &$x;
+}
+
+/**
+ * Get an item value from VarRef.
+ * Ensure the compatibility with PHP 8.1 if VarRef is set to Global.
+ * 
+ * @param string $key      The item key.
+ * @param mixed  $default  The default value.
+ *
+ * @return mixed
+ */
+public function GetVarRefItem($key, $default) {
+
+	if (is_null($this->VarRef)) {
+		
+		if (array_key_exists($key, $GLOBALS)) {
+			return $GLOBALS[$key];
+		} else {
+			return $default;
+		}
+
 	} else {
-		$x = array();
-		$this->VarRef = &$x;
+
+		if (array_key_exists($key, $this->VarRef)) {
+			return $this->VarRef[$key];
+		} else {
+			return $default;
+		}
+
 	}
+	
+}
+
+/**
+ * Set an item value to VarRef.
+ * Ensure the compatibility with PHP 8.1 if VarRef is set to Global.
+ * 
+ * @param string|array $keyOrList   A list of keys and items to add, or the item key.
+ * @param mixed        $value       (optional) The item value. Use NULL in order to delete the item.
+ */
+public function SetVarRefItem($keyOrList, $value = null) {
+
+	if (is_array($keyOrList)) {
+		$list = $keyOrList;
+	} else {
+		$list = array($keyOrList => $value);
+	}
+
+	if (is_null($this->VarRef)) {
+		
+		foreach ($list as $key => $value) {
+			if (is_null($value)) {
+				unset($GLOBALS[$key]);
+			} else {
+				$GLOBALS[$key] = $value;
+			}
+		}
+
+	} else {
+
+		foreach ($list as $key => $value) {
+			if (is_null($value)) {
+				unset($this->VarRef[$key]);
+			} else {
+				$this->VarRef[$key] = $value;
+			}
+		}
+
+	}
+	
 }
 
 // Public methods
@@ -694,7 +1065,7 @@ public function LoadTemplate($File,$Charset='') {
 	}
 	$Ok = true;
 	if ($this->_PlugIns_Ok) {
-		if (isset($this->_piBeforeLoadTemplate) or isset($this->_piAfterLoadTemplate)) {
+		if (isset($this->_piBeforeLoadTemplate) || isset($this->_piAfterLoadTemplate)) {
 			// Plug-ins
 			$ArgLst = func_get_args();
 			$ArgLst[0] = &$File;
@@ -713,7 +1084,7 @@ public function LoadTemplate($File,$Charset='') {
 				$this->Source = $x;
 			}
 		}
-		if ($this->_Mode==0) {
+		if ($this->meth_Misc_IsMainTpl()) {
 			if (!is_null($File)) $this->_LastFile = $File;
 			if ($Charset!=='+') $this->TplVars = array();
 			$this->meth_Misc_Charset($Charset);
@@ -722,7 +1093,7 @@ public function LoadTemplate($File,$Charset='') {
 		if ($this->OnLoad) $this->meth_Merge_AutoOn($this->Source,'onload',true,true);
 	}
 	// Plug-ins
-	if ($this->_PlugIns_Ok and isset($ArgLst) and isset($this->_piAfterLoadTemplate)) $Ok = $this->meth_PlugIn_RunAll($this->_piAfterLoadTemplate,$ArgLst);
+	if ($this->_PlugIns_Ok && isset($ArgLst) && isset($this->_piAfterLoadTemplate)) $Ok = $this->meth_PlugIn_RunAll($this->_piAfterLoadTemplate,$ArgLst);
 	return $Ok;
 }
 
@@ -734,7 +1105,6 @@ public function GetBlockSource($BlockName,$AsArray=false,$DefTags=true,$ReplaceW
 	$P1 = false;
 	$Mode = ($DefTags) ? 3 : 2;
 	$PosBeg1 = 0;
-	$PosEndPrec = false;
 	while ($Loc = $this->meth_Locator_FindBlockNext($this->Source,$BlockName,$Pos,'.',$Mode,$P1,$FieldOutside)) {
 		$Nbr++;
 		$Sep = '';
@@ -760,6 +1130,49 @@ public function GetBlockSource($BlockName,$AsArray=false,$DefTags=true,$ReplaceW
 	}
 	if ($ReplaceWith!==false) $this->Source = substr($this->Source,0,$PosBeg1).$ReplaceWith.substr($this->Source,$Pos+1);
 	return $RetVal;
+}
+
+/**
+ * Get the value of a XML-HTML attribute targeted thanks to a TBS fields having parameter att.
+ * @param  string  $Name       Name of the TBS fields. It must have parameter att.
+ * @param  boolean $delete     (optional, true by default) Use true to delete the TBS field.
+ * @return string|true|null|false  The value of the attribute,
+ *                                 true if the attribute is found without value,
+ *                                 null if the TBS field, the target element is not found,
+ *                                 or false for other error.
+ */
+public function GetAttValue($Name, $delete = true) {
+	$Pos = 0;
+	$val = null;
+	while ($Loc = $this->meth_Locator_FindTbs($this->Source,$Name,$Pos,'.')) {
+		if (isset($Loc->PrmLst['att'])) {
+			if ($this->f_Xml_AttFind($this->Source,$Loc,false,$this->AttDelim)) {
+				$val = false;
+				if ($Loc->AttBeg !== false) {
+					if ($Loc->AttValBeg !== false) {
+						$val = substr($this->Source, $Loc->AttValBeg, $Loc->AttEnd - $Loc->AttValBeg + 1);
+						$val = substr($val, 1, -1);
+					} else {
+						$val = true;
+					}
+				} else {
+					// not found
+				}
+			} else {
+				// att not found
+			}
+		} else {
+			// no att parameter
+		}
+
+		if ($delete) {
+			$this->Source = substr_replace($this->Source, '', $Loc->PosBeg, $Loc->PosEnd - $Loc->PosBeg + 1); 
+			$Pos = $Loc->PosBeg;
+		} else {
+			$Pos = $Loc->PosEnd;
+		}
+	}
+	return $val;
 }
 
 public function MergeBlock($BlockLst,$SrcId='assigned',$Query='',$QryPrms=false) {
@@ -793,7 +1206,7 @@ public function MergeField($NameLst,$Value='assigned',$IsUserFct=false,$DefaultP
 	$Ok = true;
 	$Prm = is_array($DefaultPrm);
 
-	if ( ($Value==='assigned') and ($NameLst!=='var') and ($NameLst!=='onshow') and ($NameLst!=='onload') ) {
+	if ( ($Value==='assigned') && ($NameLst!=='var') && ($NameLst!=='onshow') && ($NameLst!=='onload') ) {
 		$Arg = array($NameLst,&$Value,&$IsUserFct,&$DefaultPrm);
 		if (!$this->meth_Misc_Assign($NameLst, $Arg, 'MergeField')) return false;
 		$NameLst = $Arg[0]; $Value = &$Arg[1]; $IsUserFct = &$Arg[2]; $DefaultPrm = &$Arg[3];
@@ -844,11 +1257,57 @@ public function MergeField($NameLst,$Value='assigned',$IsUserFct=false,$DefaultP
 	}
 }
 
+/**
+ * Replace a set of simple TBS fields (that is fields without any parameters) with more complexe TBS fields.
+ * @param array  $fields     An associative array of items to replace.
+ *                           Keys are the name of the simple field to replace.
+ *                           Values are the parameters of the field as an array or as a string.
+ *                           Parameter 'name' will be used as the new name of the field, by default it is the same name as the simple field.
+ * @param string $blockName (optional) The name of the block for prefixing fields.
+ */
+public function ReplaceFields($fields, $blockName = false) {
+	
+	$prefix = ($blockName) ? $blockName . '.' : '';
+	
+	// calling the replace using array is faster than a loop
+	$what = array();
+	$with = array();
+	foreach ($fields as $name => $prms) {
+		$what[] = $this->_ChrOpen . $name . $this->_ChrClose; 
+		if (is_array($prms)) {
+			// field replace
+			$lst = '';
+			foreach ($prms as $p => $v) {
+				if ($p === 'name') {
+					$name = $v;
+				} else {
+					if ($v === true) {
+						$lst .= ';' . $p;
+					} elseif (is_array($v)) {
+						foreach($v as $x) {
+							$lst .= ';' . $p . '=' . $x;
+						} 
+					} else {
+						$lst .= ';' . $p . '=' . $v;
+					}
+				}
+			}
+			$with[] = $this->_ChrOpen . $prefix . $name . $lst . $this->_ChrClose; 
+		} else {
+			// simple string replace
+			$with[] = $prms; 
+		}
+	}
+	
+	$this->Source = str_replace($what, $with, $this->Source);
+	
+}
+
 public function Show($Render=false) {
 	$Ok = true;
 	if ($Render===false) $Render = $this->Render;
 	if ($this->_PlugIns_Ok) {
-		if (isset($this->_piBeforeShow) or isset($this->_piAfterShow)) {
+		if (isset($this->_piBeforeShow) || isset($this->_piAfterShow)) {
 			// Plug-ins
 			$ArgLst = func_get_args();
 			$ArgLst[0] = &$Render;
@@ -859,10 +1318,14 @@ public function Show($Render=false) {
 		if ($this->OnShow) $this->meth_Merge_AutoOn($this->Source,'onshow',true,true);
 		$this->meth_Merge_AutoVar($this->Source,true);
 	}
-	if ($this->_PlugIns_Ok and isset($ArgLst) and isset($this->_piAfterShow)) $this->meth_PlugIn_RunAll($this->_piAfterShow,$ArgLst);
+	if ($this->_PlugIns_Ok && isset($ArgLst) && isset($this->_piAfterShow)) $this->meth_PlugIn_RunAll($this->_piAfterShow,$ArgLst);
 	if ($this->_ErrMsgName!=='') $this->MergeField($this->_ErrMsgName, $this->ErrMsg);
-	if (($Render & TBS_OUTPUT)==TBS_OUTPUT) echo $this->Source;
-	if (($this->_Mode==0) and (($Render & TBS_EXIT)==TBS_EXIT)) exit;
+	if ($this->meth_Misc_IsMainTpl()) {
+		if (($Render & TBS_OUTPUT)==TBS_OUTPUT) echo $this->Source;
+		if (($Render & TBS_EXIT)==TBS_EXIT) exit;
+	} elseif ($this->OldSubTpl) {
+		if (($Render & TBS_OUTPUT)==TBS_OUTPUT) echo $this->Source;
+	}
 	return $Ok;
 }
 
@@ -959,6 +1422,8 @@ function meth_Locator_FindTbs(&$Txt,$Name,$Pos,$ChrSub) {
 				if ($PosEnd===false) {
 					$this->meth_Misc_Alert('','can\'t found the end of the tag \''.substr($Txt,$Pos,$PosX-$Pos+10).'...\'.');
 					$Pos++;
+				} else {
+					self::meth_Misc_ApplyPrmCombo($Loc->PrmLst, $Loc);
 				}
 			}
 
@@ -989,15 +1454,21 @@ function meth_Locator_FindTbs(&$Txt,$Name,$Pos,$ChrSub) {
 
 }
 
-function &meth_Locator_SectionNewBDef(&$LocR,$BlockName,$Txt,$PrmLst,$Cache) {
+/**
+ * Note: keep the « & » if the function is called with it.
+ *
+ * @return object
+ */
+function meth_Locator_SectionNewBDef(&$LocR,$BlockName,$Txt,$PrmLst,$Cache) {
 
 	$Chk = true;
 	$LocLst = array();
-	$LocNbr = 0;
-
+	$Pos = 0;
+	$Sort = false;
+	
 	if ($this->_PlugIns_Ok && isset($this->_piOnCacheField)) {
 		$pi = true;
-		$ArgLst = array(0=>$BlockName, 1=>false, 2=>&$Txt, 3=>array('att'=>true));
+		$ArgLst = array(0=>$BlockName, 1=>false, 2=>&$Txt, 3=>array('att'=>true), 4=>&$LocLst, 5=>&$Pos);
 	} else {
 		$pi = false;
 	}
@@ -1007,94 +1478,74 @@ function &meth_Locator_SectionNewBDef(&$LocR,$BlockName,$Txt,$PrmLst,$Cache) {
 	if ($Cache) {
 
 		$Chk = false;
-		$Pos = 0;
-		$PrevEnd = -1;
-		$PrevIsAMF = false; // AMF means Attribute Moved Forward
 		while ($Loc = $this->meth_Locator_FindTbs($Txt,$BlockName,$Pos,'.')) {
+
+			$LocNbr = 1 + count($LocLst);
+			$LocLst[$LocNbr] = &$Loc;
 			
-			$IsAMF = false;
-			$IsAtt = false;
-			$NewIdx = false;
-			
+			// Next search position : always ("original PosBeg" + 1).
+			// Must be done here because loc can be moved by the plug-in.
+			if ($Loc->Enlarged) {
+				// Enlarged
+				$Pos = $Loc->PosBeg0 + 1;
+				$Loc->Enlarged = false;
+			} else {
+				// Normal
+				$Pos = $Loc->PosBeg + 1;
+			}
+
+			// Note: the plug-in may move, delete and add one or several locs.
+			// Move   : backward or forward (will be sorted)
+			// Delete : add property DelMe=true
+			// Add    : at the end of $LocLst (will be sorted)
 			if ($pi) {
 				$ArgLst[1] = &$Loc;
 				$this->meth_Plugin_RunAll($this->_piOnCacheField,$ArgLst);
 			}
 
-			if (($Loc->SubName==='#') or ($Loc->SubName==='$')) {
+			if (($Loc->SubName==='#') || ($Loc->SubName==='$')) {
 				$Loc->IsRecInfo = true;
 				$Loc->RecInfo = $Loc->SubName;
 				$Loc->SubName = '';
 			} else {
 				$Loc->IsRecInfo = false;
 			}
-
-			if ($Loc->PosBeg>$PrevEnd) { // No embedding
-				if (isset($Loc->PrmLst['att'])) {
-					$LocSrc = substr($Txt,$Loc->PosBeg,$Loc->PosEnd-$Loc->PosBeg+1);
-					$this->f_Xml_AttFind($Txt,$Loc,true,$this->AttDelim);
-					if (isset($Loc->PrmLst['atttrue'])) {
-						$Loc->PrmLst['magnet'] = '#';
-						$Loc->PrmLst['ope'] = (isset($Loc->PrmLst['ope'])) ? $Loc->PrmLst['ope'].',attbool' : 'attbool';
-					}
-					$IsAtt = true;
-					if ($Loc->AttForward) {
-						$IsAMF = true;
-					} else {
-						if ($Loc->AttInsLen>0) {
-							for ($i=$LocNbr;$i>0;$i--) {
-								if ($LocLst[$i]->PosEnd>=$Loc->PosBeg) {
-									$NewIdx = $i;
-									$li = $LocLst[$i];
-									$li->PosBeg += $Loc->AttInsLen;
-									$li->PosEnd += $Loc->AttInsLen;
-									$LocLst[$i+1] = $li;
-								} else {
-									$i = 0;
-								}
-							}
+			
+			// Process parameter att for new added locators.
+			$NewNbr = count($LocLst);
+			for ($i=$LocNbr;$i<=$NewNbr;$i++) {
+				$li = &$LocLst[$i];
+				if (isset($li->PrmLst['att'])) {
+					$LocSrc = substr($Txt,$li->PosBeg,$li->PosEnd-$li->PosBeg+1); // for error message
+					if ($this->f_Xml_AttFind($Txt,$li,$LocLst,$this->AttDelim)) {
+						if (isset($Loc->PrmLst['atttrue'])) {
+							$li->PrmLst['magnet'] = '#';
+							$li->PrmLst['ope'] = (isset($li->PrmLst['ope'])) ? $li->PrmLst['ope'].',attbool' : 'attbool';
 						}
+						if ($i==$LocNbr) {
+							$Pos = $Loc->DelPos;
+						}
+					} else {
+						$this->meth_Misc_Alert('','TBS is not able to merge the field '.$LocSrc.' because the entity targeted by parameter \'att\' cannot be found.');
 					}
-					unset($Loc->PrmLst['att']);
-				}
-				$LocNbr++;
-			} else {
-				// The previous tag is embedding => no increment, then previous Loc is overwrited
-				$Chk = true;
-				if ($PrevIsAMF) {
-					$l = &$LocLst[$LocNbr];
-					$this->meth_Misc_Alert('','TBS is not able to merge the field '.$LocSrc.' because parameter \'att\' makes this fied moving forward over another TBS field.');
 				}
 			}
 
-			$PrevIsAMF = false;
-			if ($IsAtt) {
-				$Pos = $Loc->PrevPosBeg;
-				if ($IsAMF) $PrevIsAMF = true;
-			} elseif ($Loc->Enlarged) {
-				$Pos = $Loc->PosBeg0+1;
-				$Loc->Enlarged = false;
-			} else {
-				$Pos = $Loc->PosBeg+1;
-			}
-
-			if ($NewIdx===false) {
-				$LocLst[$LocNbr] = $Loc;
-				$PrevEnd = $Loc->PosEnd;
-			} else {
-				$LocLst[$NewIdx] = $Loc;
-				$PrevEnd = $LocLst[$LocNbr]->PosEnd;
-			}
-
+			unset($Loc);
+			
 		}
 
+		// Re-order loc
+		$e = self::f_Loc_Sort($LocLst, true, 1);
+		$Chk = ($e > 0);
+		
 	}
 
 	// Create the object
 	$o = (object) null;
 	$o->Prm = $PrmLst;
 	$o->LocLst = $LocLst;
-	$o->LocNbr = $LocNbr;
+	$o->LocNbr = count($LocLst);
 	$o->Name = $BlockName;
 	$o->Src = $Txt;
 	$o->Chk = $Chk;
@@ -1111,26 +1562,64 @@ function &meth_Locator_SectionNewBDef(&$LocR,$BlockName,$Txt,$PrmLst,$Cache) {
 
 }
 
-function meth_Locator_SectionAddGrp(&$LocR,$BlockName,&$BDef,$Type,$Field,$Prm) {
+/**
+ * Add a special section to the LocR.
+ *
+ * @param object $LocR 
+ * @param string $BlockName
+ * @param object $BDef 
+ * @param string $Field   Name of the field on which the group of values is defined.
+ * @param string $FromPrm Parameter that induced the section.
+ * 
+ * @return object
+ */
+function meth_Locator_MakeBDefFromField(&$LocR,$BlockName,$Field,$FromPrm) {
+
+	if (strpos($Field,$this->_ChrOpen)===false) {
+		// The field is a simple colmun name
+		$src = $this->_ChrOpen.$BlockName.'.'.$Field.';tbstype='.$FromPrm.$this->_ChrClose; // tbstype is an internal parameter for catching errors
+	} else {
+		// The fields is a TBS field's expression
+		$src = $Field;
+	}
+	
+	$BDef = $this->meth_Locator_SectionNewBDef($LocR,$BlockName,$src,array(),true);
+	
+	if ($BDef->LocNbr==0) $this->meth_Misc_Alert('Parameter '.$FromPrm,'The value \''.$Field.'\' is unvalide for this parameter.');
+
+	return $BDef;
+
+}
+
+/**
+ * Add a special section to the LocR.
+ *
+ * @param object $LocR 
+ * @param string $BlockName
+ * @param object $BDef 
+ * @param string $Type    Type of behavior: 'H' header, 'F' footer, 'S' splitter.
+ * @param string $Field   Name of the field on which the group of values is defined.
+ * @param string $FromPrm Parameter that induced the section.
+ */
+function meth_Locator_SectionAddGrp(&$LocR,$BlockName,&$BDef,$Type,$Field,$FromPrm) {
 
 	$BDef->PrevValue = false;
-	$BDef->Type = $Type;
+	$BDef->Type = $Type; // property not used in native, but designed for plugins
 
 	// Save sub items in a structure near to Locator.
-	$Field0 = $Field;
-	if (strpos($Field,$this->_ChrOpen)===false) $Field = $this->_ChrOpen.$BlockName.'.'.$Field.$this->_ChrClose;
-	$BDef->FDef = &$this->meth_Locator_SectionNewBDef($LocR,$BlockName,$Field,array(),true);
-	if ($BDef->FDef->LocNbr==0)	$this->meth_Misc_Alert('Parameter '.$Prm,'The value \''.$Field0.'\' is unvalide for this parameter.');
+	$BDef->FDef = $this->meth_Locator_MakeBDefFromField($LocR,$BlockName,$Field,$FromPrm);
 
 	if ($Type==='H') {
+		// Header behavior
 		if ($LocR->HeaderFound===false) {
 			$LocR->HeaderFound = true;
 			$LocR->HeaderNbr = 0;
 			$LocR->HeaderDef = array(); // 1 to HeaderNbr
 		}
 		$i = ++$LocR->HeaderNbr;
-		$LocR->HeaderDef[$i] = &$BDef;
+		$LocR->HeaderDef[$i] = $BDef;
 	} else {
+		// Footer behavior (footer or splitter)
 		if ($LocR->FooterFound===false) {
 			$LocR->FooterFound = true;
 			$LocR->FooterNbr = 0;
@@ -1138,17 +1627,27 @@ function meth_Locator_SectionAddGrp(&$LocR,$BlockName,&$BDef,$Type,$Field,$Prm) 
 		}
 		$BDef->AddLastGrp = ($Type==='F');
 		$i = ++$LocR->FooterNbr;
-		$LocR->FooterDef[$i] = &$BDef;
+		$LocR->FooterDef[$i] = $BDef;
 	}
 
 }
 
+/**
+ * Merge a locator with a text.
+ *
+ * @param string $Txt   The source string to modify.
+ * @param object $Loc   The locator of the field to replace.
+ * @param mixed  $Value The value to merge with.
+ * @param integer|false $SubStart The offset of subname to considere.
+ *
+ * @return integer The position just after the replaced field. Or the position of the start if the replace is canceled.
+ *                 This position can be useful because we don't know in advance how $Value will be replaced.
+ *                 $Loc->PosNext is also set to the next search position when embedded fields are allowed.
+ */
 function meth_Locator_Replace(&$Txt,&$Loc,&$Value,$SubStart) {
-// This function enables to merge a locator with a text and returns the position just after the replaced block
-// This position can be useful because we don't know in advance how $Value will be replaced.
 
 	// Found the value if there is a subname
-	if (($SubStart!==false) and $Loc->SubOk) {
+	if (($SubStart!==false) && $Loc->SubOk) {
 		for ($i=$SubStart;$i<$Loc->SubNbr;$i++) {
 			$x = $Loc->SubLst[$i]; // &$Loc... brings an error with Event Example, I don't know why.
 			if (is_array($Value)) {
@@ -1161,20 +1660,21 @@ function meth_Locator_Replace(&$Txt,&$Loc,&$Value,$SubStart) {
 					unset($Value); $Value = ''; break;
 				}
 			} elseif (is_object($Value)) {
-				$ArgLst = $this->f_Misc_CheckArgLst($x);
-				if (method_exists($Value,$x)) {
-					if ($this->MethodsAllowed or !in_array(strtok($Loc->FullName,'.'),array('onload','onshow','var')) ) {
-						$x = call_user_func_array(array(&$Value,$x),$ArgLst);
+				$form = $this->f_Misc_ParseFctForm($x);
+				$n = $form['name'];
+				if ( method_exists($Value,$n) || ($form['as_fct'] && method_exists($Value,'__call')) ) {
+					if ($this->MethodsAllowed || !in_array(strtok($Loc->FullName,'.'),array('onload','onshow','var')) ) {
+						$x = call_user_func_array(array(&$Value,$n),$form['args']);
 					} else {
-						if (!isset($Loc->PrmLst['noerr'])) $this->meth_Misc_Alert($Loc,'\''.$x.'\' is a method and the current TBS settings do not allow to call methods on automatic fields.',true);
+						if (!isset($Loc->PrmLst['noerr'])) $this->meth_Misc_Alert($Loc,'\''.$n.'\' is a method and the current TBS settings do not allow to call methods on automatic fields.',true);
 						$x = '';	
 					}
-				} elseif (property_exists($Value,$x)) {
-					$x = &$Value->$x;
-				} elseif (isset($Value->$x)) {
-					$x = $Value->$x; // useful for overloaded property
+				} elseif (property_exists($Value,$n)) {
+					$x = &$Value->$n;
+				} elseif (isset($Value->$n)) {
+					$x = $Value->$n; // useful for overloaded property
 				} else {
-					if (!isset($Loc->PrmLst['noerr'])) $this->meth_Misc_Alert($Loc,'item '.$x.'\' is neither a method nor a property in the class \''.get_class($Value).'\'.',true);
+					if (!isset($Loc->PrmLst['noerr'])) $this->meth_Misc_Alert($Loc,'item '.$n.'\' is neither a method nor a property in the class \''.get_class($Value).'\'. Overloaded properties must also be available for the __isset() magic method.',true);
 					unset($Value); $Value = ''; break;
 				}
 				$Value = &$x; unset($x); $x = '';
@@ -1186,7 +1686,7 @@ function meth_Locator_Replace(&$Txt,&$Loc,&$Value,$SubStart) {
 	}
 
 	$CurrVal = $Value; // Unlink
-
+	
 	if (isset($Loc->PrmLst['onformat'])) {
 		if ($Loc->FirstMerge) {
 			$Loc->OnFrmInfo = $Loc->PrmLst['onformat'];
@@ -1195,20 +1695,22 @@ function meth_Locator_Replace(&$Txt,&$Loc,&$Value,$SubStart) {
 			if (!$this->meth_Misc_UserFctCheck($Loc->OnFrmInfo,'f',$ErrMsg,$ErrMsg,true)) {
 				unset($Loc->PrmLst['onformat']);
 				if (!isset($Loc->PrmLst['noerr'])) $this->meth_Misc_Alert($Loc,'(parameter onformat) '.$ErrMsg);
-				$Loc->OnFrmInfo = 'pi'; // Execute the function pi() just to avoid extra error messages
+				$Loc->OnFrmInfo = false; 
 			}
 		} else {
 			$Loc->OnFrmArg[3] = &$this; // bugs.php.net/51174
 		}
-		$Loc->OnFrmArg[1] = &$CurrVal;
-		if (isset($Loc->PrmLst['subtpl'])) {
-			$this->meth_Misc_ChangeMode(true,$Loc,$CurrVal);
-			call_user_func_array($Loc->OnFrmInfo,$Loc->OnFrmArg);
-			$this->meth_Misc_ChangeMode(false,$Loc,$CurrVal);
-			$Loc->ConvProtect = false;
-			$Loc->ConvStr = false;
-		} else {
-			call_user_func_array($Loc->OnFrmInfo,$Loc->OnFrmArg);
+		if ($Loc->OnFrmInfo !== false) {
+			$Loc->OnFrmArg[1] = &$CurrVal;
+			if (isset($Loc->PrmLst['subtpl'])) {
+				$this->meth_Misc_ChangeMode(true,$Loc,$CurrVal);
+				call_user_func_array($Loc->OnFrmInfo,$Loc->OnFrmArg);
+				$this->meth_Misc_ChangeMode(false,$Loc,$CurrVal);
+				$Loc->ConvProtect = false;
+				$Loc->ConvStr = false;
+			} else {
+				call_user_func_array($Loc->OnFrmInfo,$Loc->OnFrmArg);
+			}
 		}
 	}
 
@@ -1307,39 +1809,56 @@ function meth_Locator_Replace(&$Txt,&$Loc,&$Value,$SubStart) {
 				$Loc->PrmLst['ope'] = $Loc->OpePrm[$i]; // for compatibility
 				$OpeArg = &$Loc->OpeArg[$i];
 				$OpeArg[1] = &$CurrVal; $OpeArg[3] = &$Txt;
-				if (!$this->meth_PlugIn_RunAll($this->_piOnOperation,$OpeArg)) return $Loc->PosBeg;
+				if (!$this->meth_PlugIn_RunAll($this->_piOnOperation,$OpeArg)) {
+					$Loc->PosNext = $Loc->PosBeg + 1; // +1 in order to avoid infinit loop
+					return $Loc->PosNext;
+				}
 				break;
 			case  1:
 				if ($Loc->ConvMode===-1) {
 					if (is_array($CurrVal)) {
 						foreach ($CurrVal as $k=>$v) {
-							if (!is_string($v)) $v = (string)$v;
+							$v = $this->meth_Misc_ToStr($v);
 							$this->meth_Conv_Str($v,$Loc->ConvBr);
 							$CurrVal[$k] = $v;
 						}
 						$CurrVal = implode($Loc->OpePrm[$i],$CurrVal);
 					} else {
-						if (!is_string($CurrVal)) $CurrVal = (string)$CurrVal;
+						$CurrVal = $this->meth_Misc_ToStr($CurrVal);
 						$this->meth_Conv_Str($CurrVal,$Loc->ConvBr);
 					}
 				} else {
 					if (is_array($CurrVal)) $CurrVal = implode($Loc->OpePrm[$i],$CurrVal);
 				}
 				break;
-			case  2: if (strlen(''.$CurrVal)>$Loc->OpePrm[$i]) $this->f_Xml_Max($CurrVal,$Loc->OpePrm[$i],$Loc->OpeEnd); break;
-			case  3: if (strlen(''.$CurrVal)>$Loc->OpePrm[$i]) $CurrVal = (($Loc->OpeUtf8) ? mb_substr(''.$CurrVal,0,$Loc->OpePrm[$i],'UTF-8') : substr(''.$CurrVal,0,$Loc->OpePrm[$i])).$Loc->OpeEnd; break;
+			case  2:
+				$x = $this->meth_Misc_ToStr($CurrVal);
+				if (strlen($x)>$Loc->OpePrm[$i]) {
+					$this->f_Xml_Max($x,$Loc->OpePrm[$i],$Loc->OpeEnd);
+				}
+				break;
+			case  3:
+				$x = $this->meth_Misc_ToStr($CurrVal);
+				if (strlen($x)>$Loc->OpePrm[$i]) {
+					if ($Loc->OpeUtf8) {
+						$CurrVal = mb_substr($x,0,$Loc->OpePrm[$i],'UTF-8').$Loc->OpeEnd;
+					} else {
+						$CurrVal = substr($x,0,$Loc->OpePrm[$i]).$Loc->OpeEnd;
+					}
+				}
+				break;
 			case  5: $CurrVal = ('0'+$CurrVal) % $Loc->OpePrm[$i]; break;
 			case  6: $CurrVal = ('0'+$CurrVal) + $Loc->OpePrm[$i]; break;
 			case  7: $CurrVal = ('0'+$CurrVal) * $Loc->OpePrm[$i]; break;
 			case  8: $CurrVal = ('0'+$CurrVal) / $Loc->OpePrm[$i]; break;
 			case  9; case 10:
 				if ($ope===9) {
-				 $CurrVal = (in_array((string)$CurrVal,$Loc->OpeMOK)) ? ' ' : '';
+				 $CurrVal = (in_array($this->meth_Misc_ToStr($CurrVal),$Loc->OpeMOK)) ? ' ' : '';
 				} else {
-				 $CurrVal = (in_array((string)$CurrVal,$Loc->OpeMKO)) ? '' : ' ';
+				 $CurrVal = (in_array($this->meth_Misc_ToStr($CurrVal),$Loc->OpeMKO)) ? '' : ' ';
 				} // no break here
 			case 11:
-				if ((string)$CurrVal==='') {
+				if ($this->meth_Misc_ToStr($CurrVal)==='') {
 					if ($Loc->MagnetId===0) $Loc->MagnetId = $Loc->MSave;
 				} else {
 					if ($Loc->MagnetId!==0) {
@@ -1349,25 +1868,25 @@ function meth_Locator_Replace(&$Txt,&$Loc,&$Value,$SubStart) {
 					$CurrVal = '';
 				}
 				break;
-			case 12: if ((string)$CurrVal===$Loc->OpePrm[$i]) $CurrVal = ''; break;
+			case 12: if ($this->meth_Misc_ToStr($CurrVal)===$Loc->OpePrm[$i]) $CurrVal = ''; break;
 			case 13: $CurrVal = str_replace('*',$CurrVal,$Loc->OpePrm[$i]); break;
 			case 14: $CurrVal = self::f_Loc_AttBoolean($CurrVal, $Loc->PrmLst['atttrue'], $Loc->AttName); break;
 			case 15: $CurrVal = ($Loc->OpeUtf8) ? mb_convert_case($CurrVal, MB_CASE_UPPER, 'UTF-8') : strtoupper($CurrVal); break;
 			case 16: $CurrVal = ($Loc->OpeUtf8) ? mb_convert_case($CurrVal, MB_CASE_LOWER, 'UTF-8') : strtolower($CurrVal); break;
 			case 17: $CurrVal = ucfirst($CurrVal); break;
-			case 18: $CurrVal = ($Loc->OpeUtf8) ? mb_convert_case($CurrVal, MB_CASE_TITLE, 'UTF-8') : ucwords($CurrVal); break;
+			case 18: $CurrVal = ($Loc->OpeUtf8) ? mb_convert_case($CurrVal, MB_CASE_TITLE, 'UTF-8') : ucwords(strtolower($CurrVal)); break;
 			}
 		}
 	}
 
 	// String conversion or format
 	if ($Loc->ConvMode===1) { // Usual string conversion
-		if (!is_string($CurrVal)) $CurrVal =(string)$CurrVal; // (string) is faster than strval() and settype()
+		$CurrVal = $this->meth_Misc_ToStr($CurrVal);
 		if ($Loc->ConvStr) $this->meth_Conv_Str($CurrVal,$Loc->ConvBr);
 	} elseif ($Loc->ConvMode===0) { // Format
 		$CurrVal = $this->meth_Misc_Format($CurrVal,$Loc->PrmLst);
 	} elseif ($Loc->ConvMode===2) { // Special string conversion
-		if (!is_string($CurrVal)) $CurrVal = (string)$CurrVal;
+		$CurrVal = $this->meth_Misc_ToStr($CurrVal);
 		if ($Loc->ConvStr) $this->meth_Conv_Str($CurrVal,$Loc->ConvBr);
 		if ($Loc->ConvEsc) $CurrVal = str_replace('\'','\'\'',$CurrVal);
 		if ($Loc->ConvWS) {
@@ -1383,7 +1902,7 @@ function meth_Locator_Replace(&$Txt,&$Loc,&$Value,$SubStart) {
 			$CurrVal = str_replace(array("\n","\r","\t"),array('\n','\r','\t'),$CurrVal);
 		}
 		if ($Loc->ConvUrl) $CurrVal = urlencode($CurrVal);
-		if ($Loc->ConvUtf8) $CurrVal = utf8_encode($CurrVal);
+		if ($Loc->ConvUtf8) $CurrVal = iconv('ISO-8859-1', 'UTF-8', $CurrVal);
 	}
 
 	// if/then/else process, there may be several if/then
@@ -1419,6 +1938,8 @@ function meth_Locator_Replace(&$Txt,&$Loc,&$Value,$SubStart) {
 		}
 	}
 
+	$IsTpl = false; // Indicates is $CurrVal is a sub-template
+
 	if (isset($Loc->PrmLst['file'])) {
 		$x = $Loc->PrmLst['file'];
 		if ($x===true) $x = $CurrVal;
@@ -1428,6 +1949,7 @@ function meth_Locator_Replace(&$Txt,&$Loc,&$Value,$SubStart) {
 		if ($x!=='') {
 			if ($this->f_Misc_GetFile($CurrVal, $x, $this->_LastFile, $this->IncludePath)) {
 				$this->meth_Locator_PartAndRename($CurrVal, $Loc->PrmLst);
+				$IsTpl = true;
 			} else {
 				if (!isset($Loc->PrmLst['noerr'])) $this->meth_Misc_Alert($Loc,'the file \''.$x.'\' given by parameter file is not found or not readable.',true);
 			}
@@ -1437,9 +1959,18 @@ function meth_Locator_Replace(&$Txt,&$Loc,&$Value,$SubStart) {
 
 	if (isset($Loc->PrmLst['script'])) {// Include external PHP script
 		$x = $Loc->PrmLst['script'];
-		if ($x===true) $x = $CurrVal;
-		$this->meth_Merge_AutoVar($x,false);
-		$x = trim(str_replace($this->_ChrVal,$CurrVal,$x));
+		if ($this->ScriptsAllowed) {
+			if ($x===true) $x = $CurrVal;
+			$this->meth_Merge_AutoVar($x,false);
+			$x = trim(str_replace($this->_ChrVal,$CurrVal,$x));
+			if (basename($x) == basename($this->_LastFile)) {
+				if (!isset($Loc->PrmLst['noerr'])) $this->meth_Misc_Alert($Loc,'the file \''.$x.'\' given by parameter script cannot be called because it has the same name as the current template and this is suspicious.',true);
+				$x= '';
+			}
+		} else {
+			if (!isset($Loc->PrmLst['noerr'])) $this->meth_Misc_Alert($Loc,'parameter \'script\' is forbidden by default. It can be allowed by a TBS option.',true);
+			$x = '';	
+		}
 		if ($x!=='') {
 			$this->_Subscript = $x;
 			$this->CurrPrm = &$Loc->PrmLst;
@@ -1450,6 +1981,7 @@ function meth_Locator_Replace(&$Txt,&$Loc,&$Value,$SubStart) {
 			}
 			if ($sub) $this->meth_Misc_ChangeMode(false,$Loc,$CurrVal);
 			$this->meth_Locator_PartAndRename($CurrVal, $Loc->PrmLst);
+			$IsTpl = true;
 			unset($this->CurrPrm);
 			$ConvProtect = false;
 		}
@@ -1478,7 +2010,8 @@ function meth_Locator_Replace(&$Txt,&$Loc,&$Value,$SubStart) {
 				if ($Loc->PrmLst['magnet']==='#') {
 					if (!isset($Loc->AttBeg)) {
 						$Loc->PrmLst['att'] = '.';
-						$this->f_Xml_AttFind($Txt,$Loc,true,$this->AttDelim);
+						// no moving because att info would be modified and thus become wrong regarding to the eventually cached source
+						$this->f_Xml_AttFind($Txt,$Loc,false,$this->AttDelim);
 					}
 					if (isset($Loc->AttBeg)) {
 						$Loc->MagnetId = -3;
@@ -1506,7 +2039,12 @@ function meth_Locator_Replace(&$Txt,&$Loc,&$Value,$SubStart) {
 		case 0: break;
 		case -1: $CurrVal = '&nbsp;'; break; // Enables to avoid null cells in HTML tables
 		case -2: $CurrVal = $Loc->PrmLst['ifempty']; break;
-		case -3: $Loc->Enlarged = true; $Loc->PosBeg = $Loc->AttBegM; $Loc->PosEnd = $Loc->AttEnd; break;
+		case -3:
+			// magnet=#
+			$Loc->Enlarged = true;
+			$Loc->PosBeg = ($Txt[$Loc->AttBeg-1]===' ') ? $Loc->AttBeg-1 : $Loc->AttBeg;
+			$Loc->PosEnd = $Loc->AttEnd;
+			break;
 		case 1:
 			$Loc->Enlarged = true;
 			$this->f_Loc_EnlargeToTag($Txt,$Loc,$Loc->PrmLst['magnet'],false);
@@ -1537,25 +2075,31 @@ function meth_Locator_Replace(&$Txt,&$Loc,&$Value,$SubStart) {
 	} else {
 
 		if ($ConvProtect) $CurrVal = str_replace($this->_ChrOpen,$this->_ChrProtect,$CurrVal); // TBS protection
-		$NewEnd = $Loc->PosBeg + strlen($CurrVal);
+		$NewEnd = $Loc->PosBeg + ($IsTpl ? 0 : strlen($CurrVal));
 
 	}
 
 	$Txt = substr_replace($Txt,$CurrVal,$Loc->PosBeg,$Loc->PosEnd-$Loc->PosBeg+1);
+	
+	$Loc->PosNext = $NewEnd;
 	return $NewEnd; // Return the new end position of the field
 
 }
 
+/**
+ * Return the first block locator just after the PosBeg position
+ *
+ * @param integer $Mode 
+ *                1 : Merge_Auto => doesn't save $Loc->BlockSrc, save the bounds of TBS Def tags instead, return also fields
+ *                2 : FindBlockLst or GetBlockSource => save $Loc->BlockSrc without TBS Def tags
+ *                3 : GetBlockSource => save $Loc->BlockSrc with TBS Def tags
+ */
 function meth_Locator_FindBlockNext(&$Txt,$BlockName,$PosBeg,$ChrSub,$Mode,&$P1,&$FieldBefore) {
-// Return the first block locator just after the PosBeg position
-// Mode = 1 : Merge_Auto => doesn't save $Loc->BlockSrc, save the bounds of TBS Def tags instead, return also fields
-// Mode = 2 : FindBlockLst or GetBlockSource => save $Loc->BlockSrc without TBS Def tags
-// Mode = 3 : GetBlockSource => save $Loc->BlockSrc with TBS Def tags
 
 	$SearchDef = true;
 	$FirstField = false;
 	// Search for the first tag with parameter "block"
-	while ($SearchDef and ($Loc = $this->meth_Locator_FindTbs($Txt,$BlockName,$PosBeg,$ChrSub))) {
+	while ($SearchDef && ($Loc = $this->meth_Locator_FindTbs($Txt,$BlockName,$PosBeg,$ChrSub))) {
 		if (isset($Loc->PrmLst['block'])) {
 			if (isset($Loc->PrmLst['p1'])) {
 				if ($P1) return false;
@@ -1580,7 +2124,7 @@ function meth_Locator_FindBlockNext(&$Txt,$BlockName,$PosBeg,$ChrSub,$Mode,&$P1,
 
 	if ($Block==='begin') { // Block definied using begin/end
 
-		if (($FirstField!==false) and ($FirstField->PosEnd<$Loc->PosBeg)) $FieldBefore = true;
+		if (($FirstField!==false) && ($FirstField->PosEnd<$Loc->PosBeg)) $FieldBefore = true;
 
 		$Opened = 1;
 		while ($Loc2 = $this->meth_Locator_FindTbs($Txt,$BlockName,$PosBeg,$ChrSub)) {
@@ -1618,7 +2162,7 @@ function meth_Locator_FindBlockNext(&$Txt,$BlockName,$PosBeg,$ChrSub,$Mode,&$P1,
 		$beg = $Loc->PosBeg;
 		$end = $Loc->PosEnd;
 		if ($this->f_Loc_EnlargeToTag($Txt,$Loc,$Block,false)===false) return $this->meth_Misc_Alert($Loc,'at least one tag corresponding to '.$Loc->PrmLst['block'].' is not found. Check opening tags, closing tags and embedding levels.',false,'in block\'s definition');
-		if ($Loc->SubOk or ($Mode===3)) {
+		if ($Loc->SubOk || ($Mode===3)) {
 			$Loc->BlockSrc = substr($Txt,$Loc->PosBeg,$Loc->PosEnd-$Loc->PosBeg+1);
 			$Loc->PosDefBeg = $beg - $Loc->PosBeg;
 			$Loc->PosDefEnd = $end - $Loc->PosBeg;
@@ -1628,7 +2172,7 @@ function meth_Locator_FindBlockNext(&$Txt,$BlockName,$PosBeg,$ChrSub,$Mode,&$P1,
 	}
 
 	$Loc->BlockFound = true;
-	if (($FirstField!==false) and ($FirstField->PosEnd<$Loc->PosBeg)) $FieldBefore = true;
+	if (($FirstField!==false) && ($FirstField->PosEnd<$Loc->PosBeg)) $FieldBefore = true;
 	return $Loc; // methods return by ref by default
 
 }
@@ -1685,6 +2229,16 @@ function meth_Locator_PartAndRename(&$CurrVal, &$PrmLst) {
 
 }
 
+/**
+ * Retrieve the list of all sections and their finition for a given block name.
+ *
+ * @param string  $Txt
+ * @param string  $BlockName
+ * @param integer $Pos        
+ * @param string|false $SpePrm The parameter's name for Special section (used for navigation bar), or false if none.
+ *
+ * @return object
+ */
 function meth_Locator_FindBlockLst(&$Txt,$BlockName,$Pos,$SpePrm) {
 // Return a locator object covering all block definitions, even if there is no block definition found.
 
@@ -1701,6 +2255,10 @@ function meth_Locator_FindBlockLst(&$Txt,$BlockName,$Pos,$SpePrm) {
 	$LocR->SerialEmpty = false;
 	$LocR->GrpBreak = false; // Only for plug-ins
 
+	$LocR->BoundFound = false;
+	$LocR->CheckNext = false;
+	$LocR->CheckPrev = false;
+	
 	$LocR->WhenFound = false;
 	$LocR->WhenDefault = false;
 
@@ -1729,7 +2287,7 @@ function meth_Locator_FindBlockLst(&$Txt,$BlockName,$Pos,$SpePrm) {
 					// Redefine the Header block
 					$Parent->Src = substr($Src,0,$LocR->PosBeg);
 					// Add a Footer block
-					$BDef = &$this->meth_Locator_SectionNewBDef($LocR,$BlockName,substr($Src,$LocR->PosEnd+1),$Parent->Prm,true);
+					$BDef = $this->meth_Locator_SectionNewBDef($LocR,$BlockName,substr($Src,$LocR->PosEnd+1),$Parent->Prm,true);
 					$this->meth_Locator_SectionAddGrp($LocR,$BlockName,$BDef,'F',$Parent->Fld,'parentgrp');
 				}
 				// Now go down to previous level
@@ -1765,7 +2323,7 @@ function meth_Locator_FindBlockLst(&$Txt,$BlockName,$Pos,$SpePrm) {
 				$dynprm = array('when','headergrp','footergrp','parentgrp');
 				foreach($dynprm as $dp) {
 					$n = 0;
-					if ((isset($Loc->PrmLst[$dp])) and (strpos($Loc->PrmLst[$dp],$this->_ChrOpen.$BlockName)!==false)) {
+					if ((isset($Loc->PrmLst[$dp])) && (strpos($Loc->PrmLst[$dp],$this->_ChrOpen.$BlockName)!==false)) {
 						$n++;
 						if ($n==1) {
 							$len = $Loc->PosDefEnd - $Loc->PosDefBeg + 1;
@@ -1778,13 +2336,23 @@ function meth_Locator_FindBlockLst(&$Txt,$BlockName,$Pos,$SpePrm) {
 			}
 			// Save the block and cache its tags
 			$IsParentGrp = isset($Loc->PrmLst['parentgrp']);
-			$BDef = &$this->meth_Locator_SectionNewBDef($LocR,$BlockName,$Loc->BlockSrc,$Loc->PrmLst,!$IsParentGrp);
+			$BDef = $this->meth_Locator_SectionNewBDef($LocR,$BlockName,$Loc->BlockSrc,$Loc->PrmLst,!$IsParentGrp);
+
+			// Bounds
+			$BoundPrm = false;
+			$lst = array('firstingrp'=>1, 'lastingrp'=>2, 'singleingrp'=>3); // 1=prev, 2=next, 3=1+2=prev+next
+			foreach ($lst as $prm => $chk) {
+				if (isset($Loc->PrmLst[$prm])) {
+					$BoundPrm = $prm;
+					$BoundChk = $chk;
+				}
+			}
 
 			// Add the text in the list of blocks
 			if (isset($Loc->PrmLst['nodata'])) { // Nodata section
-				$LocR->NoData = &$BDef;
-			} elseif (($SpePrm!==false) and isset($Loc->PrmLst[$SpePrm])) { // Special section (used for navigation bar)
-				$LocR->Special = &$BDef;
+				$LocR->NoData = $BDef;
+			} elseif (($SpePrm!==false) && isset($Loc->PrmLst[$SpePrm])) { // Special section (used for navigation bar)
+				$LocR->Special = $BDef;
 			} elseif (isset($Loc->PrmLst['when'])) {
 				if ($LocR->WhenFound===false) {
 					$LocR->WhenFound = true;
@@ -1793,13 +2361,13 @@ function meth_Locator_FindBlockLst(&$Txt,$BlockName,$Pos,$SpePrm) {
 					$LocR->WhenLst = array();
 				}
 				$this->meth_Merge_AutoVar($Loc->PrmLst['when'],false);
-				$BDef->WhenCond = &$this->meth_Locator_SectionNewBDef($LocR,$BlockName,$Loc->PrmLst['when'],array(),true);
-				$BDef->WhenBeforeNS = ($LocR->SectionNbr===0);
+				$BDef->WhenCond = $this->meth_Locator_SectionNewBDef($LocR,$BlockName,$Loc->PrmLst['when'],array(),true);
+				$BDef->WhenBeforeNS = ($LocR->SectionNbr===0); // position of the When section relativley to the Normal Section
 				$i = ++$LocR->WhenNbr;
-				$LocR->WhenLst[$i] = &$BDef;
+				$LocR->WhenLst[$i] = $BDef;
 				if (isset($Loc->PrmLst['several'])) $LocR->WhenSeveral = true;
 			} elseif (isset($Loc->PrmLst['default'])) {
-				$LocR->WhenDefault = &$BDef;
+				$LocR->WhenDefault = $BDef;
 				$LocR->WhenDefaultBeforeNS = ($LocR->SectionNbr===0);
 			} elseif (isset($Loc->PrmLst['headergrp'])) {
 				$this->meth_Locator_SectionAddGrp($LocR,$BlockName,$BDef,'H',$Loc->PrmLst['headergrp'],'headergrp');
@@ -1815,7 +2383,7 @@ function meth_Locator_FindBlockLst(&$Txt,$BlockName,$Pos,$SpePrm) {
 				$BDef->Beg = $LocR->PosBeg;
 				$BDef->End = $LocR->PosEnd;
 				$Pid++;
-				$ParentLst[$Pid] = &$BDef;
+				$ParentLst[$Pid] = $BDef;
 				$Txt = &$BDef->Src;
 				$Pos = $Loc->PosDefBeg + 1;
 				$LocR->BlockFound = false;
@@ -1841,17 +2409,17 @@ function meth_Locator_FindBlockLst(&$Txt,$BlockName,$Pos,$SpePrm) {
 					$SrId = 1;
 					do {
 						// Save previous subsection
-						$SrBDef = &$this->meth_Locator_SectionNewBDef($LocR,$SrName,$SrLoc->BlockSrc,$SrLoc->PrmLst,true);
+						$SrBDef = $this->meth_Locator_SectionNewBDef($LocR,$SrName,$SrLoc->BlockSrc,$SrLoc->PrmLst,true);
 						$SrBDef->SrBeg = $SrLoc->PosBeg;
 						$SrBDef->SrLen = $SrLoc->PosEnd - $SrLoc->PosBeg + 1;
 						$SrBDef->SrTxt = false;
-						$BDef->SrBDefLst[$SrId] = &$SrBDef;
+						$BDef->SrBDefLst[$SrId] = $SrBDef;
 						// Put in order
-						$BDef->SrBDefOrdered[$SrId] = &$SrBDef;
+						$BDef->SrBDefOrdered[$SrId] = $SrBDef;
 						$i = $SrId;
-						while (($i>1) and ($SrBDef->SrBeg<$BDef->SrBDefOrdered[$SrId-1]->SrBeg)) {
-							$BDef->SrBDefOrdered[$i] = &$BDef->SrBDefOrdered[$i-1];
-							$BDef->SrBDefOrdered[$i-1] = &$SrBDef;
+						while (($i>1) && ($SrBDef->SrBeg<$BDef->SrBDefOrdered[$SrId-1]->SrBeg)) {
+							$BDef->SrBDefOrdered[$i] = $BDef->SrBDefOrdered[$i-1];
+							$BDef->SrBDefOrdered[$i-1] = $SrBDef;
 							$i--;
 						}
 						// Search next subsection
@@ -1863,26 +2431,296 @@ function meth_Locator_FindBlockLst(&$Txt,$BlockName,$Pos,$SpePrm) {
 					$BDef->SrBDefNbr = $SrId-1;
 					$BDef->IsSerial = true;
 					$i = ++$LocR->SectionNbr;
-					$LocR->SectionLst[$i] = &$BDef;
+					$LocR->SectionLst[$i] = $BDef;
 				}
+			} elseif (isset($Loc->PrmLst['parallel'])) {
+				$BlockLst = $this->meth_Locator_FindParallel($Txt, $Loc->PosBeg, $Loc->PosEnd, $Loc->PrmLst['parallel']);
+				if ($BlockLst) {
+					// Store BDefs
+					foreach ($BlockLst as $i => $Blk) {
+						if ($Blk['IsRef']) {
+							$PrBDef = $BDef;
+						} else {
+							$PrBDef = $this->meth_Locator_SectionNewBDef($LocR,$BlockName,$Blk['Src'],array(),true);
+						}
+						$PrBDef->PosBeg = $Blk['PosBeg'];
+						$PrBDef->PosEnd = $Blk['PosEnd'];
+						$i = ++$LocR->SectionNbr;
+						$LocR->SectionLst[$i] = $PrBDef;
+					}
+					$LocR->PosBeg = $BlockLst[0]['PosBeg'];
+					$LocR->PosEnd = $BlockLst[$LocR->SectionNbr-1]['PosEnd'];
+				}
+			} elseif ($BoundPrm !== false) {
+				$BDef->BoundExpr = $this->meth_Locator_MakeBDefFromField($LocR,$BlockName,$Loc->PrmLst[$BoundPrm],$BoundPrm);
+				$BDef->ValCurr = null;
+				$BDef->ValNext = null;
+				$BDef->CheckPrev = (($BoundChk & 1) != 0); // bitwise check
+				if ($BDef->CheckPrev) {
+					$LocR->CheckPrev = true;
+					$LocR->ValPrev = null;
+				}
+				$BDef->CheckNext = (($BoundChk & 2) != 0); // bitwise check
+				if ($BDef->CheckNext) {
+					$LocR->CheckNext = true;
+					$LocR->ValNext = null;
+				}
+				if (!$LocR->BoundFound) {
+					$LocR->BoundFound = true;
+					$LocR->BoundLst = array();
+					$LocR->BoundNb = 0;
+					$LocR->BoundSingleNb = 0;
+				}
+				if ($BoundChk == 3) {
+					// Insert the singleingrp before all other types
+					array_splice($LocR->BoundLst, $LocR->BoundSingleNb, 0, array($BDef));
+					$LocR->BoundSingleNb++;
+				} else {
+					// Insert other types at the end
+					$LocR->BoundLst[] = $BDef;
+				}
+				$LocR->BoundNb++;
 			} else {
 				// Normal section
 				$i = ++$LocR->SectionNbr;
-				$LocR->SectionLst[$i] = &$BDef;
+				$LocR->SectionLst[$i] = $BDef;
 			}
 
 		}
 
 	} while ($Loc!==false);
 
-	if ($LocR->WhenFound and ($LocR->SectionNbr===0)) {
+	if ($LocR->WhenFound && ($LocR->SectionNbr===0)) {
 		// Add a blank section if When is used without a normal section
-		$BDef = &$this->meth_Locator_SectionNewBDef($LocR,$BlockName,'',array(),false);
+		$BDef = $this->meth_Locator_SectionNewBDef($LocR,$BlockName,'',array(),false);
 		$LocR->SectionNbr = 1;
 		$LocR->SectionLst[1] = &$BDef;
 	}
 
 	return $LocR; // methods return by ref by default
+
+}
+
+function meth_Locator_FindParallel(&$Txt, $ZoneBeg, $ZoneEnd, $ConfId) {
+
+	// Define configurations
+	global $_TBS_ParallelLst;
+
+	if ( ($ConfId=='tbs:table')  && (!isset($_TBS_ParallelLst['tbs:table'])) ) {
+		$_TBS_ParallelLst['tbs:table'] = array(
+			'parent' => 'table',
+			'ignore' => array('!--', 'caption', 'thead', 'tbody', 'tfoot'),
+			'cols' => array(),
+			'rows' => array('tr', 'colgroup'),
+			'cells' => array('td'=>'colspan', 'th'=>'colspan', 'col'=>'span'),
+		);
+	}
+
+	if (!isset($_TBS_ParallelLst[$ConfId])) return $this->meth_Misc_Alert("Parallel", "The configuration '$ConfId' is not found.");
+
+	$conf = $_TBS_ParallelLst[$ConfId];
+
+	$Parent = $conf['parent'];
+
+	// Search parent bounds
+	$par_o = self::f_Xml_FindTag($Txt,$Parent,true ,$ZoneBeg,false,1,false);
+	if ($par_o===false) return $this->meth_Misc_Alert("Parallel", "The opening tag '$Parent' is not found.");
+
+	$par_c = self::f_Xml_FindTag($Txt,$Parent,false,$ZoneBeg,true,-1,false);
+	if ($par_c===false) return $this->meth_Misc_Alert("Parallel", "The closing tag '$Parent' is not found.");
+
+	$SrcPOffset = $par_o->PosEnd + 1;
+	$SrcP = substr($Txt, $SrcPOffset, $par_c->PosBeg - $SrcPOffset);
+
+	// temporary variables
+	$tagR = '';
+	$tagC = '';
+	$z = '';
+	$pRO  = false;
+	$pROe = false;
+	$pCO  = false;
+	$pCOe = false;
+	$p = false;
+	$Loc = new clsTbsLocator;
+
+	$Rows  = array();
+	$RowIdx = 0;
+	$RefRow = false;
+	$RefCellB= false;
+	$RefCellE = false;
+	
+	$RowType = array();
+
+	// Loop on entities inside the parent entity
+	$PosR = 0;
+
+	$mode_column = true;
+	$Cells = array();
+	$ColNum = 1;
+	$IsRef = false;
+	
+	// Search for the next Row Opening tag
+	while (self::f_Xml_GetNextEntityName($SrcP, $PosR, $tagR, $pRO, $p)) {
+
+		$pROe = strpos($SrcP, '>', $p) + 1;
+		$singleR = ($SrcP[$pROe-2] === '/');
+
+		// If the tag is not a closing, a self-closing and has a name
+		if ($tagR!=='') {
+
+			if (in_array($tagR, $conf['ignore'])) {
+				// This tag must be ignored
+				$PosR = $p;
+			} elseif (isset($conf['cols'][$tagR])) {
+				// Column definition that must be merged as a cell
+				if ($mode_column === false)  return $this->meth_Misc_Alert("Parallel", "There is a column definition ($tagR) after a row (".$Rows[$RowIdx-1]['tag'].").");
+				if (isset($RowType['_column'])) {
+					$RowType['_column']++;
+				} else {
+					$RowType['_column'] = 1;
+				}
+				$att = $conf['cols'][$tagR];
+				$this->meth_Locator_FindParallelCol($SrcP, $PosR, $tagR, $pRO, $p, $SrcPOffset, $RowIdx, $ZoneBeg, $ZoneEnd, $att, $Loc, $Cells, $ColNum, $IsRef, $RefCellB, $RefCellE, $RefRow);
+
+			} elseif (!$singleR) {
+
+				// Search the Row Closing tag
+				$locRE = self::f_Xml_FindTag($SrcP, $tagR, false, $pROe, true, -1, false);
+				if ($locRE===false) return $this->meth_Misc_Alert("Parallel", "The row closing tag is not found. (tagR=$tagR, p=$p, pROe=$pROe)");
+
+				// Inner source
+				$SrcR = substr($SrcP, $pROe, $locRE->PosBeg - $pROe);
+				$SrcROffset = $SrcPOffset + $pROe;
+
+				if (in_array($tagR, $conf['rows'])) {
+
+					if ( $mode_column && isset($RowType['_column']) ) {
+						$Rows[$RowIdx] = array('tag'=>'_column', 'cells' => $Cells, 'isref' => $IsRef, 'count' => $RowType['_column']);
+						$RowIdx++;
+					}
+
+					$mode_column = false;
+
+					if (isset($RowType[$tagR])) {
+						$RowType[$tagR]++;
+					} else {
+						$RowType[$tagR] = 1;
+					}
+
+					// Now we've got the row entity, we search for cell entities
+					$Cells = array();
+					$ColNum = 1;
+					$PosC = 0;
+					$IsRef = false;
+
+					// Loop on Cell Opening tags
+					while (self::f_Xml_GetNextEntityName($SrcR, $PosC, $tagC, $pCO, $p)) {
+						if (isset($conf['cells'][$tagC]) ) {
+							$att = $conf['cells'][$tagC];
+							$this->meth_Locator_FindParallelCol($SrcR, $PosC, $tagC, $pCO, $p, $SrcROffset, $RowIdx, $ZoneBeg, $ZoneEnd, $att, $Loc, $Cells, $ColNum, $IsRef, $RefCellB, $RefCellE, $RefRow);
+						} else {
+							$PosC = $p;
+						}
+					}
+
+					$Rows[$RowIdx] = array('tag'=>$tagR, 'cells' => $Cells, 'isref' => $IsRef, 'count' => $RowType[$tagR]);
+					$RowIdx++;
+
+				}
+
+				$PosR = $locRE->PosEnd; 
+
+			} else {
+				$PosR = $pROe;
+			}
+		} else {
+			$PosR = $pROe;
+		}
+	}
+
+	//return $Rows;
+
+	$Blocks = array();
+	$rMax = count($Rows) -1;
+	foreach ($Rows as $r=>$Row) {
+		$Cells = $Row['cells'];
+		if (isset($Cells[$RefCellB]) && $Cells[$RefCellB]['IsBegin']) {
+			if ( isset($Cells[$RefCellE]) &&  $Cells[$RefCellE]['IsEnd'] ) {
+				$PosBeg = $Cells[$RefCellB]['PosBeg'];
+				$PosEnd = $Cells[$RefCellE]['PosEnd'];
+				$Blocks[$r] = array(
+					'PosBeg' => $PosBeg,
+					'PosEnd' => $PosEnd,
+					'IsRef'  => $Row['isref'],
+					'Src' => substr($Txt, $PosBeg, $PosEnd - $PosBeg + 1),
+				);
+			} else {
+				return $this->meth_Misc_Alert("Parallel", "At row ".$Row['count']." having entity [".$Row['tag']."], the column $RefCellE is missing or is not the last in a set of spanned columns. (The block is defined from column $RefCellB to $RefCellE)");
+			}
+		} else {
+			return $this->meth_Misc_Alert("Parallel", "At row ".$Row['count']." having entity [".$Row['tag']."],the column $RefCellB is missing or is not the first in a set of spanned columns. (The block is defined from column $RefCellB to $RefCellE)");
+		}
+	}
+
+	return $Blocks;
+
+}
+
+function meth_Locator_FindParallelCol($SrcR, &$PosC, $tagC, $pCO, $p, $SrcROffset, $RowIdx, $ZoneBeg, $ZoneEnd, &$att, &$Loc, &$Cells, &$ColNum, &$IsRef, &$RefCellB, &$RefCellE, &$RefRow) {
+
+	$pCOe = false;
+
+	// Read parameters
+	$Loc->PrmLst = array();
+	self::f_Loc_PrmRead($SrcR,$p,true,'\'"','<','>',$Loc,$pCOe,true);
+
+	$singleC = ($SrcR[$pCOe-1] === '/');
+	if ($singleC) {
+		$pCEe = $pCOe;
+	} else {
+		// Find the Cell Closing tag
+		$locCE = self::f_Xml_FindTag($SrcR, $tagC, false, $pCOe, true, -1, false);
+		if ($locCE===false) return $this->meth_Misc_Alert("Parallel", "The cell closing tag is not found. (pCOe=$pCOe)");
+		$pCEe = $locCE->PosEnd;
+	}
+	
+	// Check the cell of reference
+	$Width = (isset($Loc->PrmLst[$att])) ? intval($Loc->PrmLst[$att]) : 1;
+	$ColNumE = $ColNum + $Width -1; // Ending Cell
+	$PosBeg = $SrcROffset + $pCO;
+	$PosEnd = $SrcROffset + $pCEe;
+	$OnZone = false;
+	if ( ($PosBeg <= $ZoneBeg) && ($ZoneBeg <= $PosEnd) && ($RefRow===false) ) {
+		$RefRow = $RowIdx;
+		$RefCellB = $ColNum;
+		$OnZone = true;
+		$IsRef = true;
+	}
+	if ( ($PosBeg <= $ZoneEnd) && ($ZoneEnd <= $PosEnd) ) {
+		$RefCellE = $ColNum;
+		$OnZone = true;
+	}
+	
+	// Save info
+	$Cell = array(
+		//'_tagR' => $tagR, '_tagC' => $tagC, '_att' => $att, '_OnZone' => $OnZone, '_PrmLst' => $Loc->PrmLst, '_Offset' => $SrcROffset, '_Src' => substr($SrcR, $pCO, $locCE->PosEnd - $pCO + 1),
+		'PosBeg' => $PosBeg,
+		'PosEnd' => $PosEnd,
+		'ColNum' => $ColNum,
+		'Width' => $Width,
+		'IsBegin' => true,
+		'IsEnd' => false,
+	);
+	$Cells[$ColNum] = $Cell;
+	
+	// add a virtual column to say if its a ending
+	if (!isset($Cells[$ColNumE])) $Cells[$ColNumE] = array('IsBegin' => false);
+	
+	$Cells[$ColNumE]['IsEnd'] = true;
+	$Cells[$ColNumE]['PosEnd'] = $Cells[$ColNum]['PosEnd'];
+	
+	$PosC = $pCEe;
+	$ColNum += $Width;
 
 }
 
@@ -1905,6 +2743,7 @@ function meth_Merge_Block(&$Txt,$BlockLst,&$SrcId,&$Query,$SpePrm,$SpeRecNum,$Qr
 	$NbrRecTot = 0;
 	$QueryZ = &$Query;
 	$ReturnData = false;
+	$Nothing = true;
 
 	while ($BlockId<$BlockNbr) {
 
@@ -1921,6 +2760,8 @@ function meth_Merge_Block(&$Txt,$BlockLst,&$SrcId,&$Query,$SpePrm,$SpeRecNum,$Qr
 		$LocR = $this->meth_Locator_FindBlockLst($Txt,$this->_CurrBlock,0,$SpePrm);
 
 		if ($LocR->BlockFound) {
+
+			$Nothing = false;
 
 			if ($LocR->Special!==false) $RecSpe = $SpeRecNum;
 			// OnData
@@ -1957,7 +2798,7 @@ function meth_Merge_Block(&$Txt,$BlockLst,&$SrcId,&$Query,$SpePrm,$SpeRecNum,$Qr
 					} while ($i!==false);
 				}
 				$WasP1 = true;
-			} elseif (($Src->RecSaved===false) and ($BlockNbr-$BlockId>1)) {
+			} elseif (($Src->RecSaved===false) && ($BlockNbr-$BlockId>1)) {
 				$Src->RecSaving = true;
 			}
 		} elseif ($WasP1) {
@@ -1967,10 +2808,10 @@ function meth_Merge_Block(&$Txt,$BlockLst,&$SrcId,&$Query,$SpePrm,$SpeRecNum,$Qr
 
 		// Open the recordset
 		if ($QueryOk) {
-			if ((!$LocR->BlockFound) and (!$LocR->FieldOutside)) {
+			if ((!$LocR->BlockFound) && (!$LocR->FieldOutside)) {
 				// Special case: return data without any block to merge
 				$QueryOk = false;
-				if ($ReturnData and (!$Src->RecSaved)) {
+				if ($ReturnData && (!$Src->RecSaved)) {
 					if ($Src->DataOpen($QueryZ,$QryPrms)) {
 						do {$Src->DataFetch();} while ($Src->CurrRec!==false);
 						$Src->DataClose();
@@ -1997,6 +2838,8 @@ function meth_Merge_Block(&$Txt,$BlockLst,&$SrcId,&$Query,$SpePrm,$SpeRecNum,$Qr
 				}
 			} elseif ($LocR->BlockFound===false) {
 				$Src->DataFetch(); // Merge first record only
+			} elseif (isset($LocR->PrmLst['parallel'])) {
+				$this->meth_Merge_BlockParallel($Txt,$LocR,$Src);
 			} else {
 				$this->meth_Merge_BlockSections($Txt,$LocR,$Src,$RecSpe);
 			}
@@ -2007,7 +2850,10 @@ function meth_Merge_Block(&$Txt,$BlockLst,&$SrcId,&$Query,$SpePrm,$SpeRecNum,$Qr
 			$NbrRecTot += $Src->RecNum;
 			$BlockId++;
 		}
-		if ($LocR->FieldOutside) $this->meth_Merge_FieldOutside($Txt,$Src->CurrRec,$Src->RecNum,$LocR->FOStop);
+		if ($LocR->FieldOutside) {
+			$Nothing = false;
+			$this->meth_Merge_FieldOutside($Txt,$Src->CurrRec,$Src->RecNum,$LocR->FOStop);
+		}
 
 	}
 
@@ -2018,8 +2864,40 @@ function meth_Merge_Block(&$Txt,$BlockLst,&$SrcId,&$Query,$SpePrm,$SpeRecNum,$Qr
 		return $Src->RecSet;
 	} else {
 		unset($Src);
-		return $NbrRecTot;
+		return ($Nothing) ? false : $NbrRecTot;
 	}
+
+}
+
+function meth_Merge_BlockParallel(&$Txt,&$LocR,&$Src) {
+
+	// Main loop
+	$Src->DataFetch();
+	
+	// Prepare sources
+	$BlockRes = array();
+	for ($i=1 ; $i<=$LocR->SectionNbr ; $i++) {
+		if ($i>1) {
+			// Add txt source between the BDefs
+			$BlockRes[$i] = substr($Txt, $LocR->SectionLst[$i-1]->PosEnd + 1, $LocR->SectionLst[$i]->PosBeg - $LocR->SectionLst[$i-1]->PosEnd -1); 
+		} else {
+			$BlockRes[$i] = '';
+		}
+	}
+	
+	while($Src->CurrRec!==false) {
+		// Merge the current record with all sections
+		for ($i=1 ; $i<=$LocR->SectionNbr ; $i++) {
+			$SecDef = &$LocR->SectionLst[$i];
+			$SecSrc = $this->meth_Merge_SectionNormal($SecDef,$Src);
+			$BlockRes[$i] .= $SecSrc;
+		}
+		// Next row
+		$Src->DataFetch();
+	}
+	
+	$BlockRes = implode('', $BlockRes);
+	$Txt = substr_replace($Txt,$BlockRes,$LocR->PosBeg,$LocR->PosEnd-$LocR->PosBeg+1);
 
 }
 
@@ -2034,12 +2912,16 @@ function meth_Merge_BlockSections(&$Txt,&$LocR,&$Src,&$RecSpe) {
 	$SrId = 0;
 	$SrNbr = 0;
 	$GrpFound = false;
-	if ($LocR->HeaderFound or $LocR->FooterFound) {
+	if ($LocR->HeaderFound || $LocR->FooterFound) {
 		$GrpFound = true;
 		$piOMG = false;
-		if ($LocR->FooterFound) $Src->PrevRec = (object) null;
+		if ($LocR->FooterFound) {
+			$Src->PrevSave = true; // $Src->PrevRec will be saved then
+		}
 	}
-  // Plug-ins
+	if ($LocR->CheckPrev) $Src->PrevSave = true;
+	if ($LocR->CheckNext) $Src->NextSave = true;
+	// Plug-ins
 	$piOMS = false;
 	if ($this->_PlugIns_Ok) {
 		if (isset($this->_piBeforeMergeBlock)) {
@@ -2050,7 +2932,7 @@ function meth_Merge_BlockSections(&$Txt,&$LocR,&$Src,&$RecSpe) {
 			$ArgLst = array(&$BlockRes,&$SecSrc);
 			$piOMS = true;
 		}
-		if ($GrpFound and isset($this->_piOnMergeGroup)) {
+		if ($GrpFound && isset($this->_piOnMergeGroup)) {
 			$ArgLst2 = array(0,0,&$Src,&$LocR);
 			$piOMG = true;
 		}
@@ -2064,20 +2946,22 @@ function meth_Merge_BlockSections(&$Txt,&$LocR,&$Src,&$RecSpe) {
 		// Headers and Footers
 		if ($GrpFound) {
 			$brk_any = false;
-			$brk_src = '';
+			$brk_src = ''; // concatenated source to insert as of breaked groups (header and footer)
 			if ($LocR->FooterFound) {
 				$brk = false;
 				for ($i=$LocR->FooterNbr;$i>=1;$i--) {
 					$GrpDef = &$LocR->FooterDef[$i];
-					$x = $this->meth_Merge_SectionNormal($GrpDef->FDef,$Src);
+					$x = $this->meth_Merge_SectionNormal($GrpDef->FDef,$Src); // value of the group expression for the current record
 					if ($Src->RecNum===1) {
+						// no footer break on first record
 						$GrpDef->PrevValue = $x;
 						$brk_i = false;
 					} else {
+						// default state for breaked group
 						if ($GrpDef->AddLastGrp) {
-							$brk_i = &$brk;
+							$brk_i = &$brk; // cascading breakings
 						} else {
-							unset($brk_i); $brk_i = false;
+							unset($brk_i); $brk_i = false; // independent breaking
 						}
 						if (!$brk_i) $brk_i = !($GrpDef->PrevValue===$x);
 						if ($brk_i) {
@@ -2089,16 +2973,14 @@ function meth_Merge_BlockSections(&$Txt,&$LocR,&$Src,&$RecSpe) {
 						}
 					}
 				}
-				$Src->PrevRec->CurrRec = $Src->CurrRec;
-				$Src->PrevRec->RecNum = $Src->RecNum;
-				$Src->PrevRec->RecKey = $Src->RecKey;
 			}
 			if ($LocR->HeaderFound) {
-				$brk = ($Src->RecNum===1);
+				// Check if the current record breaks any header group
+				$brk = ($Src->RecNum===1); // there is always a header break on first record
 				for ($i=1;$i<=$LocR->HeaderNbr;$i++) {
 					$GrpDef = &$LocR->HeaderDef[$i];
-					$x = $this->meth_Merge_SectionNormal($GrpDef->FDef,$Src);
-					if (!$brk) $brk = !($GrpDef->PrevValue===$x);
+					$x = $this->meth_Merge_SectionNormal($GrpDef->FDef,$Src); // value of the group expression for the current record
+					if (!$brk) $brk = !($GrpDef->PrevValue===$x); // cascading breakings
 					if ($brk) {
 						$ok = true;
 						if ($piOMG) {$ArgLst2[0]=&$Src; $ArgLst2[1]=&$GrpDef; $ok = $this->meth_PlugIn_RunAll($this->_piOnMergeGroup,$ArgLst2);}
@@ -2106,7 +2988,7 @@ function meth_Merge_BlockSections(&$Txt,&$LocR,&$Src,&$RecSpe) {
 						$GrpDef->PrevValue = $x;
 					}
 				}
-				$brk_any = ($brk_any or $brk);
+				$brk_any = ($brk_any || $brk);
 			}
 			if ($brk_any) {
 				if ($IsSerial) {
@@ -2118,7 +3000,7 @@ function meth_Merge_BlockSections(&$Txt,&$LocR,&$Src,&$RecSpe) {
 		} // end of header and footer
 
 		// Increment Section
-		if (($IsSerial===false) and $SecOk) {
+		if (($IsSerial===false) && $SecOk) {
 			$SecId++;
 			if ($SecId>$LocR->SectionNbr) $SecId = 1;
 			$SecDef = &$LocR->SectionLst[$SecId];
@@ -2141,47 +3023,64 @@ function meth_Merge_BlockSections(&$Txt,&$LocR,&$Src,&$RecSpe) {
 			}
 		} else { // Classic merge
 			if ($SecOk) {
-				if ($Src->RecNum===$RecSpe) $SecDef = &$LocR->Special;
+				// There is some normal sections
+				if ($Src->RecNum===$RecSpe) {
+					$SecDef = &$LocR->Special;
+				} elseif ($LocR->BoundFound) {
+					$first = true;
+					for ($i = 0 ; $i < $LocR->BoundNb ; $i++) {
+						// all bounds must be tested in order to update next and prev values, but only the first found must be kept
+						if ($this->meth_Merge_CheckBounds($LocR->BoundLst[$i],$Src)) {
+							if ($first) $SecDef = &$LocR->BoundLst[$i];
+							$first = false;
+						}
+					}
+				}
 				$SecSrc = $this->meth_Merge_SectionNormal($SecDef,$Src);
 			} else {
+				// No normal section
 				$SecSrc = '';
 			}
-			if ($LocR->WhenFound) { // With conditional blocks
+			 // Conditional blocks
+			if ($LocR->WhenFound) {
 				$found = false;
 				$continue = true;
 				$i = 1;
 				do {
 					$WhenBDef = &$LocR->WhenLst[$i];
-					$cond = $this->meth_Merge_SectionNormal($WhenBDef->WhenCond,$Src);
+					$cond = $this->meth_Merge_SectionNormal($WhenBDef->WhenCond,$Src); // conditional expression for the current record 
 					if ($this->f_Misc_CheckCondition($cond)) {
 						$x_when = $this->meth_Merge_SectionNormal($WhenBDef,$Src);
-						if ($WhenBDef->WhenBeforeNS) {$SecSrc = $x_when.$SecSrc;} else {$SecSrc = $SecSrc.$x_when;}
+						$SecSrc = ($WhenBDef->WhenBeforeNS) ? $x_when.$SecSrc : $SecSrc.$x_when;
 						$found = true;
 						if ($LocR->WhenSeveral===false) $continue = false;
 					}
 					$i++;
 					if ($i>$LocR->WhenNbr) $continue = false;
 				} while ($continue);
-				if (($found===false) and ($LocR->WhenDefault!==false)) {
+				if (($found===false) && ($LocR->WhenDefault!==false)) {
 					$x_when = $this->meth_Merge_SectionNormal($LocR->WhenDefault,$Src);
-					if ($LocR->WhenDefaultBeforeNS) {$SecSrc = $x_when.$SecSrc;} else {$SecSrc = $SecSrc.$x_when;}
+					$SecSrc = ($LocR->WhenDefaultBeforeNS) ? $x_when.$SecSrc : $SecSrc.$x_when;
 				}
 			}
 			if ($piOMS) $this->meth_PlugIn_RunAll($this->_piOnMergeSection,$ArgLst);
 			$BlockRes .= $SecSrc;
 		}
 
-		// Next row
+		// Next record
 		$Src->DataFetch();
 
 	} //--> while($CurrRec!==false) {
 
+	// At this point, all data has been fetched.
+
+	// Source to add after the last record
 	$SecSrc = '';
 
 	// Serial: merge the extra the sub-blocks
 	if ($IsSerial) $SecSrc .= $this->meth_Merge_SectionSerial($SecDef,$SrId,$LocR);
 
-	// Footer
+	// Add all footers after the last record
 	if ($LocR->FooterFound) {
 		if ($Src->RecNum>0) {
 			for ($i=1;$i<=$LocR->FooterNbr;$i++) {
@@ -2205,12 +3104,12 @@ function meth_Merge_BlockSections(&$Txt,&$LocR,&$Src,&$RecSpe) {
 	}
 
 	// Plug-ins
-	if ($piOMS and ($SecSrc!=='')) $this->meth_PlugIn_RunAll($this->_piOnMergeSection,$ArgLst);
+	if ($piOMS && ($SecSrc!=='')) $this->meth_PlugIn_RunAll($this->_piOnMergeSection,$ArgLst);
 
 	$BlockRes .= $SecSrc;
 
 	// Plug-ins
-	if ($this->_PlugIns_Ok and isset($ArgLst) and isset($this->_piAfterMergeBlock)) {
+	if ($this->_PlugIns_Ok && isset($ArgLst) && isset($this->_piAfterMergeBlock)) {
 		$ArgLst = array(&$BlockRes,&$Src,&$LocR);
 		$this->meth_PlugIn_RunAll($this->_piAfterMergeBlock,$ArgLst);
 	}
@@ -2241,7 +3140,7 @@ function meth_Merge_AutoVar(&$Txt,$ConvStr,$Id='var') {
 		if ($Loc->SubLst[0]==='') {
 			$Pos = $this->meth_Merge_AutoSpe($Txt,$Loc);
 		} elseif ($Loc->SubLst[0][0]==='~') {
-			if (!isset($ObjOk)) $ObjOk = (is_object($this->ObjectRef) or is_array($this->ObjectRef));
+			if (!isset($ObjOk)) $ObjOk = (is_object($this->ObjectRef) || is_array($this->ObjectRef));
 			if ($ObjOk) {
 				$Loc->SubLst[0] = substr($Loc->SubLst[0],1);
 				$Pos = $this->meth_Locator_Replace($Txt,$Loc,$this->ObjectRef,0);
@@ -2251,21 +3150,23 @@ function meth_Merge_AutoVar(&$Txt,$ConvStr,$Id='var') {
 				$this->meth_Misc_Alert($Loc,'property ObjectRef is neither an object nor an array. Its type is \''.gettype($this->ObjectRef).'\'.',true);
 				$Pos = $Loc->PosEnd + 1;
 			}
-		} elseif ($PrefOk and (substr($Loc->SubLst[0],0,$PrefL)!==$Pref)) {
+		} elseif ($PrefOk && (substr($Loc->SubLst[0],0,$PrefL)!==$Pref)) {
 			if (isset($Loc->PrmLst['noerr'])) {
 				$Pos = $this->meth_Locator_Replace($Txt,$Loc,$x,false);
 			} else {
 				$this->meth_Misc_Alert($Loc,'does not match the allowed prefix.',true);
 				$Pos = $Loc->PosEnd + 1;
 			}
-		} elseif (isset($this->VarRef[$Loc->SubLst[0]])) {
-			$Pos = $this->meth_Locator_Replace($Txt,$Loc,$this->VarRef[$Loc->SubLst[0]],1);
+		} elseif ( isset($this->VarRef) && isset($this->VarRef[$Loc->SubLst[0]])) {
+			$Pos = $this->meth_Locator_Replace($Txt,$Loc, $this->VarRef[$Loc->SubLst[0]], 1);
+		} elseif ( is_null($this->VarRef) && isset($GLOBALS[$Loc->SubLst[0]]) ) {
+			$Pos = $this->meth_Locator_Replace($Txt,$Loc, $GLOBALS[$Loc->SubLst[0]], 1);
 		} else {
 			if (isset($Loc->PrmLst['noerr'])) {
 				$Pos = $this->meth_Locator_Replace($Txt,$Loc,$x,false);
 			} else {
 				$Pos = $Loc->PosEnd + 1;
-				$msg = (isset($this->VarRef['GLOBALS'])) ? 'VarRef seems refers to $GLOBALS' : 'VarRef seems refers to a custom array of values';
+				$msg = (is_null($this->VarRef)) ? 'VarRef seems refers to $GLOBALS' : 'VarRef seems refers to a custom array of values';
 				$this->meth_Misc_Alert($Loc,'the key \''.$Loc->SubLst[0].'\' does not exist or is not set in VarRef. ('.$msg.')',true);
 			}
 		}
@@ -2368,7 +3269,7 @@ function meth_Merge_FieldOutside(&$Txt, &$CurrRec, $RecNum, $PosMax) {
 	do {
 		$Loc = $this->meth_Locator_FindTbs($Txt,$this->_CurrBlock,$Pos,'.');
 		if ($Loc!==false) {
-			if (($PosMax!==false) and ($Loc->PosEnd>$PosMax)) return;
+			if (($PosMax!==false) && ($Loc->PosEnd>$PosMax)) return;
 			if ($Loc->SubName==='#') {
 				$NewEnd = $this->meth_Locator_Replace($Txt,$Loc,$RecNum,false);
 			} else {
@@ -2378,6 +3279,53 @@ function meth_Merge_FieldOutside(&$Txt, &$CurrRec, $RecNum, $PosMax) {
 			$Pos = $NewEnd;
 		}
 	} while ($Loc!==false);
+}
+
+/**
+ * Check the values of previous and next record for expression.
+ *
+ * @return boolean
+ */
+function meth_Merge_CheckBounds($BDef,$Src) {
+		
+	// Retrieve values considering that a new record is fetched
+	// The order is important
+	if ($BDef->CheckPrev) {
+	   $BDef->ValPrev = $BDef->ValCurr;
+	}
+	if ($BDef->CheckNext) {
+		if (is_null($BDef->ValNext)) {
+			// ValNext is not set at this point for the very first record
+			$BDef->ValCurr = $this->meth_Merge_SectionNormal($BDef->BoundExpr,$Src);
+		} else {
+			$BDef->ValCurr = $BDef->ValNext;
+		}
+		if ($Src->NextRec->CurrRec === false) {
+			// No next record
+			$diff_next = true;
+		} else {
+			$BDef->ValNext = $this->meth_Merge_SectionNormal($BDef->BoundExpr,$Src->NextRec); // merge with next record
+			$diff_next = ($BDef->ValCurr !== $BDef->ValNext);
+		}
+	} else {
+		$BDef->ValCurr = $this->meth_Merge_SectionNormal($BDef->BoundExpr,$Src); // merge with current record
+	}
+
+	// Check values
+	$result = false; // this state must never happen
+	if ($BDef->CheckPrev) {
+		$diff_prev = ($BDef->ValCurr !== $BDef->ValPrev);
+	   if ($BDef->CheckNext) {
+		   $result = $diff_prev && $diff_next;
+	   } else {
+		   $result = $diff_prev;
+	   }
+	} elseif ($BDef->CheckNext) {
+		$result = $diff_next;
+	}
+	
+	return $result;
+	
 }
 
 function meth_Merge_SectionNormal(&$BDef,&$Src) {
@@ -2404,7 +3352,7 @@ function meth_Merge_SectionNormal(&$BDef,&$Src) {
 			}
 		}
 
-		// Unchached locators
+		// Uncached locators
 		if ($BDef->Chk) {
 			$BlockName = &$BDef->Name;
 			$Pos = 0;
@@ -2413,7 +3361,7 @@ function meth_Merge_SectionNormal(&$BDef,&$Src) {
 
 	} else {
 
-		// Chached locators
+		// Cached locators
 		for ($i=$iMax;$i>0;$i--) {
 			if ($LocLst[$i]->PosBeg<$PosMax) {
 				if ($LocLst[$i]->IsRecInfo) {
@@ -2513,8 +3461,10 @@ function meth_Merge_SectionSerial(&$BDef,&$SrId,&$LocR) {
 
 }
 
+/**
+ * Merge [onload] or [onshow] fields and blocks
+ */
 function meth_Merge_AutoOn(&$Txt,$Name,$TplVar,$MergeVar) {
-// Merge [onload] or [onshow] fields and blocks
 
 	$GrpDisplayed = array();
 	$GrpExclusive = array();
@@ -2535,7 +3485,7 @@ function meth_Merge_AutoOn(&$Txt,$Name,$TplVar,$MergeVar) {
 
 			$DelBlock = false;
 			$DelField = false;
-			if ($Displayed and $Exclusive) {
+			if ($Displayed && $Exclusive) {
 				$DelBlock = true;
 			} else {
 				if (isset($LocA->PrmLst['when'])) {
@@ -2561,30 +3511,48 @@ function meth_Merge_AutoOn(&$Txt,$Name,$TplVar,$MergeVar) {
 
 			// Del parts
 			if ($DelField) {
-				if ($LocA->PosBeg2!==false) $Txt = substr_replace($Txt,'',$LocA->PosBeg2,$LocA->PosEnd2-$LocA->PosBeg2+1);
+				if ($LocA->PosBeg2!==false) $Txt = substr_replace($Txt, '', $LocA->PosBeg2, $LocA->PosEnd2 - $LocA->PosBeg2 + 1);
 				$Txt = substr_replace($Txt,'',$LocA->PosBeg,$LocA->PosEnd-$LocA->PosBeg+1);
 				$Pos = $LocA->PosBeg;
 			} else {
+				$FldPos = $LocA->PosBeg;
+				$FldLen = $LocA->PosEnd - $LocA->PosBeg + 1;
 				if ($LocA->PosBeg2===false) {
 					if ($this->f_Loc_EnlargeToTag($Txt,$LocA,$LocA->PrmLst['block'],false)===false) $this->meth_Misc_Alert($LocA,'at least one tag corresponding to '.$LocA->PrmLst['block'].' is not found. Check opening tags, closing tags and embedding levels.',false,'in block\'s definition');
 				} else {
 					$LocA->PosEnd = $LocA->PosEnd2;
 				}
 				if ($DelBlock) {
-					$Txt = substr_replace($Txt,'',$LocA->PosBeg,$LocA->PosEnd-$LocA->PosBeg+1);
+					$parallel = false;
+					if (isset($LocA->PrmLst['parallel'])) {
+						// may return false if error
+						$parallel = $this->meth_Locator_FindParallel($Txt, $LocA->PosBeg, $LocA->PosEnd, $LocA->PrmLst['parallel']);
+						if ($parallel===false) {
+							$Txt = substr_replace($Txt,'',$FldPos,$FldLen);
+						} else {
+							// delete in reverse order
+							for ($r = count($parallel)-1 ; $r >= 0 ; $r--) {
+								$p = $parallel[$r];
+								$Txt = substr_replace($Txt,'',$p['PosBeg'],$p['PosEnd']-$p['PosBeg']+1);
+							}
+						}
+					} else {
+						$Txt = substr_replace($Txt,'',$LocA->PosBeg,$LocA->PosEnd-$LocA->PosBeg+1);
+					}
+					$Pos = $LocA->PosBeg;
 				} else {
 					// Merge the block as if it was a field
 					$x = '';
 					$this->meth_Locator_Replace($Txt,$LocA,$x,false);
+					$Pos = $LocA->PosNext;
 				}
-				$Pos = $LocA->PosBeg;
 			}
 
-		} else { // Field (has no subname at this point)
+		} else { // Field (the Loc has no subname at this point)
 
 			// Check for Template Var
 			if ($TplVar) {
-				if (isset($LocA->PrmLst['tplvars']) or isset($LocA->PrmLst['tplfrms'])) {
+				if (isset($LocA->PrmLst['tplvars']) || isset($LocA->PrmLst['tplfrms'])) {
 					$Scan = '';
 					foreach ($LocA->PrmLst as $Key => $Val) {
 						if ($Scan=='v') {
@@ -2601,17 +3569,17 @@ function meth_Merge_AutoOn(&$Txt,$Name,$TplVar,$MergeVar) {
 			}
 
 			$x = '';
-			$Pos = $this->meth_Locator_Replace($Txt,$LocA,$x,false);
-			$Pos = $LocA->PosBeg;
+			$this->meth_Locator_Replace($Txt,$LocA,$x,false);
+			$Pos = $LocA->PosNext; // continue at the start so embedded fields can be merged
 
 		}
 
 	}
 
-	if ($MergeVar) $this->meth_Merge_AutoVar($this->Source,true,$Name); // merge other fields (must have subnames)
+	if ($MergeVar) $this->meth_Merge_AutoVar($Txt,true,$Name); // merge other fields (must have subnames)
 
 	foreach ($this->Assigned as $n=>$a) {
-		if (isset($a['auto']) and ($a['auto']===$Name)) {
+		if (isset($a['auto']) && ($a['auto']===$Name)) {
 			$x = array();
 			$this->meth_Misc_Assign($n,$x,false);
 		}
@@ -2636,12 +3604,12 @@ function meth_Conv_Prepare(&$Loc, $StrConv) {
 // Convert a string with charset or custom function
 function meth_Conv_Str(&$Txt,$ConvBr=true) {
 	if ($this->Charset==='') { // Html by default
-		$Txt = htmlspecialchars($Txt);
+		$Txt = htmlspecialchars($Txt, ENT_COMPAT); // ENT_COMPAT is no more the default value since PHP 8.1
 		if ($ConvBr) $Txt = nl2br($Txt);
 	} elseif ($this->_CharsetFct) {
-		$Txt = call_user_func($this->Charset,$Txt,$ConvBr);
+		$Txt = call_user_func($this->Charset, $Txt,$ConvBr);
 	} else {
-		$Txt = htmlspecialchars($Txt,ENT_COMPAT,$this->Charset);
+		$Txt = htmlspecialchars($Txt, ENT_COMPAT, $this->Charset);
 		if ($ConvBr) $Txt = nl2br($Txt);
 	}
 }
@@ -2649,7 +3617,7 @@ function meth_Conv_Str(&$Txt,$ConvBr=true) {
 // Standard alert message provided by TinyButStrong, return False is the message is cancelled.
 function meth_Misc_Alert($Src,$Msg,$NoErrMsg=false,$SrcType=false) {
 	$this->ErrCount++;
-	if ($this->NoErr) {
+	if ($this->NoErr || (PHP_SAPI==='cli') ) {
 		$t = array('','','','','');
 	} else {
 		$t = array('<br /><b>','</b>','<em>','</em>','<br />');
@@ -2657,7 +3625,13 @@ function meth_Misc_Alert($Src,$Msg,$NoErrMsg=false,$SrcType=false) {
 	}
 	if (!is_string($Src)) {
 		if ($SrcType===false) $SrcType='in field';
-		$Src = $SrcType.' '.$this->_ChrOpen.$Src->FullName.'...'.$this->_ChrClose;
+		if (isset($Src->PrmLst['tbstype'])) {
+			$Msg = 'Column \''.$Src->SubName.'\' is expected but missing in the current record.';
+			$Src = 'Parameter \''.$Src->PrmLst['tbstype'].'='.$Src->SubName.'\'';
+			$NoErrMsg = false;
+		} else {
+			$Src = $SrcType.' '.$this->_ChrOpen.$Src->FullName.'...'.$this->_ChrClose;
+		}
 	}
 	$x = $t[0].'TinyButStrong Error'.$t[1].' '.$Src.': '.$Msg;
 	if ($NoErrMsg) $x = $x.' '.$t[2].'This message can be cancelled using parameter \'noerr\'.'.$t[3];
@@ -2665,7 +3639,9 @@ function meth_Misc_Alert($Src,$Msg,$NoErrMsg=false,$SrcType=false) {
 	if ($this->NoErr) {
 		$this->ErrMsg .= $x;
 	} else {
-		$x = str_replace($this->_ChrOpen,$this->_ChrProtect,$x);
+		if (PHP_SAPI!=='cli') {
+			$x = str_replace($this->_ChrOpen,$this->_ChrProtect,$x);
+		}
 		echo $x;
 	}
 	return false;
@@ -2681,7 +3657,7 @@ function meth_Misc_Assign($Name,&$ArgLst,$CallingMeth) {
 
 	$a = &$this->Assigned[$Name];
 	$meth = (isset($a['type'])) ? $a['type'] : 'MergeBlock';
-	if (($CallingMeth!==false) and (strcasecmp($CallingMeth,$meth)!=0)) return $this->meth_Misc_Alert('with '.$CallingMeth.'() method','the assigned key \''.$Name.'\' cannot be used with method '.$CallingMeth.' because it is defined to run with '.$meth.'.');
+	if (($CallingMeth!==false) && (strcasecmp($CallingMeth,$meth)!=0)) return $this->meth_Misc_Alert('with '.$CallingMeth.'() method','the assigned key \''.$Name.'\' cannot be used with method '.$CallingMeth.' because it is defined to run with '.$meth.'.');
 
 	$n = count($a);
 	for ($i=0;$i<$n;$i++) {
@@ -2692,7 +3668,7 @@ function meth_Misc_Assign($Name,&$ArgLst,$CallingMeth) {
 		if (in_array(strtolower($meth),array('mergeblock','mergefield'))) {
 			call_user_func_array(array(&$this,$meth), $ArgLst);
 		} else {
-			return $this->meth_Misc_Alert('The assigned field \''.$Name.'\'. cannot be merged because its type \''.$a[0].'\' is not supported.');
+			return $this->meth_Misc_Alert('', 'The assigned field \''.$Name.'\'. cannot be merged because its type \''.$a[0].'\' is not supported.');
 		}
 	}
 	if (!isset($a['merged'])) $a['merged'] = 0;
@@ -2700,25 +3676,35 @@ function meth_Misc_Assign($Name,&$ArgLst,$CallingMeth) {
 	return true;
 }
 
+function meth_Misc_IsMainTpl() {
+	return ($this->_Mode==0);
+}
+
 function meth_Misc_ChangeMode($Init,&$Loc,&$CurrVal) {
 	if ($Init) {
 		// Save contents configuration
 		$Loc->SaveSrc = &$this->Source;
-		$Loc->SaveRender = $this->Render;
 		$Loc->SaveMode = $this->_Mode;
 		$Loc->SaveVarRef = &$this->VarRef;
 		unset($this->Source); $this->Source = '';
-		$this->Render = TBS_OUTPUT;
 		$this->_Mode++; // Mode>0 means subtemplate mode
-		ob_start(); // Start buffuring output
+		if ($this->OldSubTpl) {
+			ob_start(); // Start buffuring output
+			$Loc->SaveRender = $this->Render;
+		}
+		$this->Render = TBS_OUTPUT;
 	} else {
 		// Restore contents configuration
+		if ($this->OldSubTpl) {
+			$CurrVal = ob_get_contents();
+			ob_end_clean();
+			$this->Render = $Loc->SaveRender;
+		} else {
+			$CurrVal = $this->Source;
+		}
 		$this->Source = &$Loc->SaveSrc;
-		$this->Render = $Loc->SaveRender;
 		$this->_Mode = $Loc->SaveMode;
 		$this->VarRef = &$Loc->SaveVarRef;
-		$CurrVal = ob_get_contents();
-		ob_end_clean();
 	}
 }
 
@@ -2748,22 +3734,27 @@ function meth_Misc_UserFctCheck(&$FctInfo,$FctCat,&$FctObj,&$ErrMsg,$FctCheck=fa
 		for ($i=0;$i<=$iMax;$i++) {
 			$x = &$Lst[$i];
 			if (is_object($ObjRef)) {
-				$ArgLst = $this->f_Misc_CheckArgLst($x);
-				if (method_exists($ObjRef,$x)) {
-					if ($i<$iMax) {
-						$f = array(&$ObjRef,$x); unset($ObjRef);
-						$ObjRef = call_user_func_array($f,$ArgLst);
+				$form = $this->f_Misc_ParseFctForm($x);
+				$n = $form['name'];
+				if ($i === $iMax0) {
+					// last item is supposed to be a function's name, without parenthesis
+					if ( method_exists($ObjRef,$n)  || (method_exists($ObjRef, '__call'))) {
+						// Ok, continue. If $form['as_fct'] is true, then it will produce an error when try to call function $x
+					} else {
+						$ErrMsg = 'Expression \''.$FctStr.'\' is invalid because \''.$n.'\' is not a method in the class \''.get_class($ObjRef).'\'.';
+						return false;
 					}
-				} elseif ($i===$iMax0) {
-					$ErrMsg = 'Expression \''.$FctStr.'\' is invalid because \''.$x.'\' is not a method in the class \''.get_class($ObjRef).'\'.';
-					return false;
-				} elseif (isset($ObjRef->$x)) {
-					$ObjRef = &$ObjRef->$x;
+				} elseif ( method_exists($ObjRef,$n) || ($form['as_fct'] && method_exists($ObjRef, 'x__call')) ) {
+					$f = array(&$ObjRef,$n);
+					unset($ObjRef);
+					$ObjRef = call_user_func_array($f,$form['args']);
+				} elseif (isset($ObjRef->$n)) {
+					$ObjRef = &$ObjRef->$n;
 				} else {
-					$ErrMsg = 'Expression \''.$FctStr.'\' is invalid because sub-item \''.$x.'\' is neither a method nor a property in the class \''.get_class($ObjRef).'\'.';
+					$ErrMsg = 'Expression \''.$FctStr.'\' is invalid because sub-item \''.$n.'\' is neither a method nor a property in the class \''.get_class($ObjRef).'\'.';
 					return false;
 				}
-			} elseif (($i<$iMax0) and is_array($ObjRef)) {
+			} elseif (($i<$iMax0) && is_array($ObjRef)) {
 				if (isset($ObjRef[$x])) {
 					$ObjRef = &$ObjRef[$x];
 				} else {
@@ -2788,7 +3779,7 @@ function meth_Misc_UserFctCheck(&$FctInfo,$FctCat,&$FctObj,&$ErrMsg,$FctCheck=fa
 				}
 			}
 			$FctInfo['type'] = 4;
-			if (isset($this->RecheckObj) and $this->RecheckObj) $Save = false;
+			if (isset($this->RecheckObj) && $this->RecheckObj) $Save = false;
 		} else {
 			$FctInfo = array(&$ObjRef,$x);
 		}
@@ -2796,7 +3787,7 @@ function meth_Misc_UserFctCheck(&$FctInfo,$FctCat,&$FctObj,&$ErrMsg,$FctCheck=fa
 
 		$IsObj = ($FctCat==='o');
 
-		if ($IsObj and method_exists($FctObj,'tbsdb_open') and (!method_exists($FctObj,'+'))) { // '+' avoid a bug in PHP 5
+		if ($IsObj && method_exists($FctObj,'tbsdb_open') && (!method_exists($FctObj,'+'))) { // '+' avoid a bug in PHP 5
 
 			if (!method_exists($FctObj,'tbsdb_fetch')) {
 				$ErrMsg = 'the expected method \'tbsdb_fetch\' is not found for the class '.$Cls.'.';
@@ -2817,7 +3808,7 @@ function meth_Misc_UserFctCheck(&$FctInfo,$FctCat,&$FctObj,&$ErrMsg,$FctCheck=fa
 				$i = 0;
 				$iMax = strlen($x);
 				while ($i<$iMax) {
-					if (($x[$i]==='_') or (($x[$i]>='a') and ($x[$i]<='z')) or (($x[$i]>='0') and ($x[$i]<='9'))) {
+					if (($x[$i]==='_') || (($x[$i]>='a') && ($x[$i]<='z')) || (($x[$i]>='0') && ($x[$i]<='9'))) {
 						$Key .= $x[$i];
 						$i++;
 					} else {
@@ -2889,7 +3880,7 @@ function meth_Misc_Charset($Charset) {
 	if ($Charset==='+') return;
 	$this->_CharsetFct = false;
 	if (is_string($Charset)) {
-		if (($Charset!=='') and ($Charset[0]==='=')) {
+		if (($Charset!=='') && ($Charset[0]==='=')) {
 			$ErrMsg = false;
 			$Charset = substr($Charset,1);
 			if ($this->meth_Misc_UserFctCheck($Charset,'f',$ErrMsg,$ErrMsg,false)) {
@@ -2914,7 +3905,7 @@ function meth_PlugIn_RunAll(&$FctBank,&$ArgLst) {
 	$OkAll = true;
 	foreach ($FctBank as $FctInfo) {
 		$Ok = call_user_func_array($FctInfo,$ArgLst);
-		if (!is_null($Ok)) $OkAll = ($OkAll and $Ok);
+		if (!is_null($Ok)) $OkAll = ($OkAll && $Ok);
 	}
 	return $OkAll;
 }
@@ -2927,7 +3918,7 @@ function meth_PlugIn_Install($PlugInId,$ArgLst,$Auto) {
 		// Create an instance
 		$IsObj = true;
 		$PiRef = new $PlugInId;
-		$PiRef->TBS = &$this;
+		$PiRef->TBS = &$this; // public $TBS property is madatory since PHP 8.2
 		if (!method_exists($PiRef,'OnInstall')) return $this->meth_Misc_Alert($ErrMsg,'OnInstall() method is not found.');
 		$FctRef = array(&$PiRef,'OnInstall');
 	} else {
@@ -3001,8 +3992,27 @@ function meth_PlugIn_SetEvent($PlugInId, $Event, $NewRef='') {
 
 }
 
+/**
+ * Convert any value to a string without specific formating.
+ */
+static function meth_Misc_ToStr($Value) {
+	if (is_string($Value)) {
+		return $Value;
+	} elseif(is_object($Value)) {
+		if (method_exists($Value,'__toString')) {
+			return $Value->__toString();
+		} elseif (is_a($Value, 'DateTime')) {
+			// ISO date-time format
+			return $Value->format('c');
+		}
+	}
+	return @(string)$Value; // (string) is faster than strval() and settype()
+}
+
+/**
+ * Return the formated representation of a Date/Time or numeric variable using a 'VB like' format syntax instead of the PHP syntax.
+ */
 function meth_Misc_Format(&$Value,&$PrmLst) {
-// This function return the formated representation of a Date/Time or numeric variable using a 'VB like' format syntax instead of the PHP syntax.
 
 	$FrmStr = $PrmLst['frm'];
 	$CheckNumeric = true;
@@ -3014,30 +4024,39 @@ function meth_Misc_Format(&$Value,&$PrmLst) {
 	// Manage Multi format strings
 	if ($Frm['type']=='multi') {
 
-		// Select the format
+		// Found the format according to the value (positive|negative|zero|null)
+		
 		if (is_numeric($Value)) {
+			// Numeric:
 			if (is_string($Value)) $Value = 0.0 + $Value;
 			if ($Value>0) {
 				$FrmStr = &$Frm[0];
 			} elseif ($Value<0) {
 				$FrmStr = &$Frm[1];
 				if ($Frm['abs']) $Value = abs($Value);
-			} else { // zero
+			} else {
+				// zero
 				$FrmStr = &$Frm[2];
 				$Minus = '';
 			}
 			$CheckNumeric = false;
 		} else {
-			$Value = ''.$Value;
+			// date|
+			$Value = $this->meth_Misc_ToStr($Value);
 			if ($Value==='') {
-				return $Frm[3]; // Null value
+				// Null value
+				return $Frm[3];
 			} else {
+				// Date conversion
 				$t = strtotime($Value); // We look if it's a date
-				if (($t===-1) or ($t===false)) { // Date not recognized
+				if (($t===-1) || ($t===false)) {
+					// Date not recognized
 					return $Frm[1];
-				} elseif ($t===943916400) { // Date to zero
+				} elseif ($t===943916400) {
+					// Date to zero in some softwares
 					return $Frm[2];
-				} else { // It's a date
+				} else {
+					// It's a date
 					$Value = $t;
 					$FrmStr = &$Frm[0];
 				}
@@ -3051,42 +4070,25 @@ function meth_Misc_Format(&$Value,&$PrmLst) {
 	}
 
 	switch ($Frm['type']) {
-	case 'num' :
+	case 'num':
 		// NUMERIC
 		if ($CheckNumeric) {
 			if (is_numeric($Value)) {
 				if (is_string($Value)) $Value = 0.0 + $Value;
 			} else {
-				return ''.$Value;
+				return $this->meth_Misc_ToStr($Value);
 			}
 		}
 		if ($Frm['PerCent']) $Value = $Value * 100;
 		$Value = number_format($Value,$Frm['DecNbr'],$Frm['DecSep'],$Frm['ThsSep']);
+		if ($Frm['Pad']!==false) $Value = str_pad($Value, $Frm['Pad'], '0', STR_PAD_LEFT);
 		if ($Frm['ThsRpl']!==false) $Value = str_replace($Frm['ThsSep'], $Frm['ThsRpl'], $Value);
 		$Value = substr_replace($Frm['Str'],$Value,$Frm['Pos'],$Frm['Len']);
-		if ($Frm['Pad']!==false) $Value = str_pad($Value, $Frm['Pad'], '0', STR_PAD_LEFT);
 		return $Value;
 		break;
-	case 'date' :
+	case 'date':
 		// DATE
-		if (is_string($Value)) {
-			if ($Value==='') return '';
-			$x = strtotime($Value);
-			if (($x===-1) or ($x===false)) {
-				if (!is_numeric($Value)) $Value = 0;
-			} else {
-				$Value = &$x;
-			}
-		} else {
-			if (!is_numeric($Value)) return ''.$Value;
-		}
-		if ($Frm['loc'] or isset($PrmLst['locale'])) {
-			$x = strftime($Frm['str_loc'],$Value);
-			$this->meth_Conv_Str($x,false); // may have accent
-			return $x;
-		} else {
-			return date($Frm['str_us'],$Value);
-		}
+		return $this->meth_Misc_DateFormat($Value, $Frm);
 		break;
 	default:
 		return $Frm['string'];
@@ -3095,8 +4097,118 @@ function meth_Misc_Format(&$Value,&$PrmLst) {
 
 }
 
-// Simply update an array
-static function f_Misc_UpdateArray(&$array, $numerical, $v, $d) {
+function meth_Misc_DateFormat(&$Value, $Frm) {
+	
+	if (is_object($Value)) {
+		$Value = $this->meth_Misc_ToStr($Value);
+	}
+
+	if ($Value==='') return '';
+	
+	// Note : DateTime object is supported since PHP 5.2
+	// So we could simplify this function using only DateTime instead of timestamp.
+	
+	// Now we try to get the timestamp
+	if (is_string($Value)) {
+		// Any string value is assumed to be a formated date.
+		// If you whant a string value to be a considered to a a time stamp, then use prefixe '@' accordding to the 
+		$x = strtotime($Value);
+		// In case of error return false (return -1 for PHP < 5.1.0)
+		if (($x===false) || ($x===-1)) {
+			if (!is_numeric($Value)) {
+				// At this point the value is not recognized as a date
+				// Special fix for PHP 32-bit and date > '2038-01-19 03:14:07' => strtotime() failes
+				if (PHP_INT_SIZE === 4) { // 32-bit
+					try {
+						$date = new DateTime($Value);
+						return $date->format($Frm['str_us']);
+						// 'locale' cannot be supported in this case because strftime() has to equilavent with DateTime
+					} catch (Exception $e) {
+						// We take an arbitrary value in order to avoid formating error
+						$Value = 0; // '1970-01-01'
+						// echo $e->getMessage();
+					}                
+				} else {
+					// We take an arbirtary value in order to avoid formating error
+					$Value = 0; // '1970-01-01'
+				}
+			}
+		} else {
+			$Value = &$x;
+		}
+	} else {
+		if (!is_numeric($Value)) {
+			// It’s not a timestamp, thus we return the non formated value 
+			return $this->meth_Misc_ToStr($Value);
+		}
+	}
+	
+	if ($Frm['loc'] || isset($PrmLst['locale'])) {
+		$x = strftime($Frm['str_loc'],$Value);
+		$this->meth_Conv_Str($x,false); // may have accent
+		return $x;
+	} else {
+		return date($Frm['str_us'],$Value);
+	}
+	
+}
+
+/**
+ * Apply combo parameters.
+ * @param array        $PrmLst The existing list of combo
+ * @param object|false $Loc    The current locator, of false if called from an combo definition
+ */
+static function meth_Misc_ApplyPrmCombo(&$PrmLst, $Loc) {
+	
+	if (isset($PrmLst['combo'])) {
+		
+		$name_lst = explode(',', $PrmLst['combo']);
+		$DefLst = &$GLOBALS['_TBS_PrmCombo'];
+		
+		foreach ($name_lst as $name) {
+			if (isset($DefLst[$name])) {
+				$ap = $DefLst[$name];
+				if (isset($PrmLst['ope']) && isset($ap['ope'])) {
+					$PrmLst['ope'] .= ',' . $ap['ope']; // ope will be processed fifo
+					unset($ap['ope']);
+				}
+				if ($Loc !== false) {
+					if ( isset($ap['if']) && is_array($ap['if']) ) {
+						foreach($ap['if'] as $v) {
+							self::f_Loc_PrmIfThen($Loc, true, $v, false);
+						}
+						unset($ap['if']);
+					}
+					if ( isset($ap['then']) && is_array($ap['then'])) {
+						foreach($ap['then'] as $v) {
+							self::f_Loc_PrmIfThen($Loc, false, $v, false);
+						}
+						unset($ap['then']);
+					}
+				}
+				$PrmLst = array_merge($ap, $PrmLst);
+			} else {
+				$this->meth_Misc_Alert("with parameter 'combo'", "Combo '". $a. "' is not yet set.");
+			}
+		}
+		
+		$PrmLst['_combo'] = $PrmLst['combo']; // for debug
+		unset($PrmLst['combo']); // for security
+		
+	}
+}
+
+/**
+ * Simply update an array with another array.
+ * It works for both indexed or associativ arrays.
+ * NULL value will be deleted from the target array. 
+ * 
+ * @param array $array     The target array to be updated.
+ * @param mixed $numerical True if the keys ar numerical. Use special keyword 'frm' for TBS formats, and 'prm' for a set of parameters.
+ * @param mixed $v         An associative array of items to modify. Use value NULL for reset $array to an empty array. Other single value will be used with $d.
+ * @param mixed $d         To be used when $v is a single not null value. Will apply the key $v with value $d.
+ */
+ static function f_Misc_UpdateArray(&$array, $numerical, $v, $d) {
 	if (!is_array($v)) {
 		if (is_null($v)) {
 			$array = array();
@@ -3126,6 +4238,16 @@ static function f_Misc_UpdateArray(&$array, $numerical, $v, $d) {
 			} elseif ($numerical==='frm') {
 				self::f_Misc_FormatSave($a, $p);
 			} else {
+				if ($numerical==='prm') {
+					// apply existing combo on the new combo, so that all combo are translated into basic parameters
+					if ( isset($a['if']) && (!is_array($a['if'])) ) {
+						$a['if'] = array($a['if']);
+					}
+					if ( isset($a['then']) && (!is_array($a['then'])) ) {
+						$a['then'] = array($a['then']);
+					}
+					self::meth_Misc_ApplyPrmCombo($a, false);
+				}
 				$array[$p] = $a;
 			}
 		}
@@ -3167,10 +4289,10 @@ static function f_Misc_FormatSave(&$FrmStr,$Alias='') {
 			$nPadZ = 1;
 		} else {
 			$nPos = $nPosEnd - 1;
-			while (($nPos>=0) and ($FrmStr[$nPos]==='0')) {
+			while (($nPos>=0) && ($FrmStr[$nPos]==='0')) {
 				$nPos--;
 			}
-			if (($nPos>=1) and ($FrmStr[$nPos-1]==='0')) {
+			if (($nPos>=1) && ($FrmStr[$nPos-1]==='0')) {
 				$nDecSep = $FrmStr[$nPos];
 				$nDecNbr = $nPosEnd - $nPos;
 			} else {
@@ -3181,8 +4303,8 @@ static function f_Misc_FormatSave(&$FrmStr,$Alias='') {
 		// Thousand separator
 		$nThsSep = '';
 		$nThsRpl = false;
-		if (($nDecOk) and ($nPos>=5)) {
-			if ((substr($FrmStr,$nPos-3,3)==='000') and ($FrmStr[$nPos-4]!=='0')) {
+		if (($nDecOk) && ($nPos>=5)) {
+			if ((substr($FrmStr,$nPos-3,3)==='000') && ($FrmStr[$nPos-4]!=='0')) {
 				$p = strrpos(substr($FrmStr,0,$nPos-4), '0');
 				if ($p!==false) {
 					$len = $nPos-4-$p;
@@ -3201,12 +4323,12 @@ static function f_Misc_FormatSave(&$FrmStr,$Alias='') {
 
 		// Pass next zero
 		if ($nDecOk) $nPos--;
-		while (($nPos>=0) and ($FrmStr[$nPos]==='0')) {
+		while (($nPos>=0) && ($FrmStr[$nPos]==='0')) {
 			$nPos--;
 		}
 
 		$nLen = $nPosEnd-$nPos;
-		if ( ($nThsSep==='') and ($nLen>($nDecNbr+$nPadZ+1)) )	$nPad = $nLen - $nPadZ;
+		if ( ($nThsSep==='') && ($nLen>($nDecNbr+$nPadZ+1)) )	$nPad = $nLen - $nPadZ;
 
 		// Percent
 		$nPerCent = (strpos($FrmStr,'%')===false) ? false : true;
@@ -3304,22 +4426,38 @@ static function f_Misc_ConvSpe(&$Loc) {
 	}
 }
 
-static function f_Misc_CheckArgLst(&$Str) {
-	$ArgLst = array();
+/**
+ * Return the information if parsing a form which can be either a property of a function.
+ * @param  string $Str The form.              Example : 'my_func(aaa,bbb)'
+ * @return array  Information about the form. Example : array('name' => 'my_func', 'as_fct' => true, 'args' => array('aaa', 'bbb'),)
+ *                name:   the name of the function of the property.
+ *                as_fct: true if the form is as a function
+ *                args:   arguments of the function, or empty array if it's a property
+ */
+static function f_Misc_ParseFctForm($Str) {
+	$info = array('name' => $Str, 'as_fct' => false, 'args' => array());
 	if (substr($Str,-1,1)===')') {
 		$pos = strpos($Str,'(');
 		if ($pos!==false) {
-			$ArgLst = explode(',',substr($Str,$pos+1,strlen($Str)-$pos-2));
-			$Str = substr($Str,0,$pos);
+			$info['args'] = explode(',',substr($Str,$pos+1,strlen($Str)-$pos-2));
+			$info['name'] = substr($Str,0,$pos);
+			$info['as_fct'] = true;
 		}
 	}
-	return $ArgLst;
+	return $info;
 }
 
+/**
+ * Check if a string condition is true.
+ * @param  string  $Str The condition to check.
+ * @return boolean True if the condition if checked.
+ */
 static function f_Misc_CheckCondition($Str) {
 // Check if an expression like "exrp1=expr2" is true or false.
 
-	$StrZ = $Str; // same string but without protected data
+	// Bluid $StrZ, wich is the same as $Str but with 'z' for each character that is protected with "'".
+	// This will help to search for operators outside protected strings.
+	$StrZ = $Str;
 	$Max = strlen($Str)-1;
 	$p = strpos($Str,'\'');
 	if ($Esc=($p!==false)) {
@@ -3341,9 +4479,9 @@ static function f_Misc_CheckCondition($Str) {
 		$Ope = '+';
 		$p = strpos($StrZ,$Ope);
 		if ($p===false) return false;
-		if (($p>0) and ($StrZ[$p-1]==='-')) {
+		if (($p>0) && ($StrZ[$p-1]==='-')) {
 			$Ope = '-+'; $p--; $Len=2;
-		} elseif (($p<$Max) and ($StrZ[$p+1]==='-')) {
+		} elseif (($p<$Max) && ($StrZ[$p+1]==='-')) {
 			$Ope = '+-'; $Len=2;
 		} else {
 			return false;
@@ -3359,9 +4497,9 @@ static function f_Misc_CheckCondition($Str) {
 				$y = $StrZ[$p+1];
 				if ($y==='=') {
 					$Len=2;
-				} elseif (($x==='+') and ($y==='-')) {
+				} elseif (($x==='+') && ($y==='-')) {
 					$Ope = '+=-'; $p--; $Len=3;
-				} elseif (($x==='-') and ($y==='+')) {
+				} elseif (($x==='-') && ($y==='+')) {
 					$Ope = '-=+'; $p--; $Len=3;
 				}
 			} else {
@@ -3373,10 +4511,10 @@ static function f_Misc_CheckCondition($Str) {
 	$Val1  = trim(substr($Str,0,$p));
 	$Val2  = trim(substr($Str,$p+$Len));
 	if ($Esc) {
-		$Nude1 = self::f_Misc_DelDelimiter($Val1,'\'');
-		$Nude2 = self::f_Misc_DelDelimiter($Val2,'\'');
+		$NoDelim1 = self::f_Misc_DelDelimiter($Val1,'\'');
+		$NoDelim2 = self::f_Misc_DelDelimiter($Val2,'\'');
 	} else {
-		$Nude1 = $Nude2 = false;
+		$NoDelim1 = $NoDelim2 = false;
 	}
 
 	// Compare values
@@ -3387,10 +4525,13 @@ static function f_Misc_CheckCondition($Str) {
 	} elseif ($Ope==='~=') {
 		return (preg_match($Val2,$Val1)>0);
 	} else {
-		if ($Nude1) $Val1='0'+$Val1;
-		if ($Nude2) $Val2='0'+$Val2;
+		// If a value has no string delimiter, we assume it is supposed to be a numerical comparison.
+		if ($NoDelim1 && ($Val1 === '') ) $Val1 = '0';
+		if ($NoDelim2 && ($Val2 === '') ) $Val2 ='0';
+		// PHP makes a numerical comparison when each item is independently either a numeric value or a numeric string. Otherwise it makes a string comparison.
+		// So we let PHP doing the comparison on its onw way.
 		if ($Ope==='+-') {
-			return ($Val1>$Val2);
+			return ($Val1 > $Val2);
 		} elseif ($Ope==='-+') {
 			return ($Val1 < $Val2);
 		} elseif ($Ope==='+=-') {
@@ -3404,10 +4545,16 @@ static function f_Misc_CheckCondition($Str) {
 
 }
 
+/**
+ * Delete the string delimiters that surrounds the string, if any. But not inside (no need).
+ * @param  string $Txt    The string to modifiy.
+ * @param  string $Delim  The character that can delimit the string.
+ * @return boolean True if the given string was not delimited with $Delim.
+ */
 static function f_Misc_DelDelimiter(&$Txt,$Delim) {
 // Delete the string delimiters
 	$len = strlen($Txt);
-	if (($len>1) and ($Txt[0]===$Delim)) {
+	if (($len>1) && ($Txt[0]===$Delim)) {
 		if ($Txt[$len-1]===$Delim) $Txt = substr($Txt,1,$len-2);
 		return false;
 	} else {
@@ -3449,6 +4596,12 @@ static function f_Misc_GetFile(&$Res, &$File, $LastFile='', $IncludePath=false, 
 
 }
 
+/**
+ * Try to open the file for reading.
+ * @param string        $File The file name.
+ * @param string|bolean $Dir  A The directory where to search, of false to omit directory.
+ * @return ressource Return the file pointer, of false on error. Note that urgument $File will be updated to the file with directory.
+ */
 static function f_Misc_TryFile(&$File, $Dir) {
 	if ($Dir==='') return false;
 	$FileSearch = ($Dir===false) ? $File : $Dir.'/'.$File;
@@ -3458,6 +4611,9 @@ static function f_Misc_TryFile(&$File, $Dir) {
 	return $f;
 }
 
+/**
+ * Read TBS or XML tags, starting to the begining of the tag.
+ */
 static function f_Loc_PrmRead(&$Txt,$Pos,$XmlTag,$DelimChrs,$BegStr,$EndStr,&$Loc,&$PosEnd,$WithPos=false) {
 
 	$BegLen = strlen($BegStr);
@@ -3500,19 +4656,19 @@ static function f_Loc_PrmRead(&$Txt,$Pos,$XmlTag,$DelimChrs,$BegStr,$EndStr,&$Lo
 
 				// Analyzing parameters
 				$CheckChr = false;
-				if (($Chr===' ') or ($Chr==="\r") or ($Chr==="\n")) {
+				if (($Chr===' ') || ($Chr==="\r") || ($Chr==="\n")) {
 					if ($Status===1) {
-						if ($SubName and ($XmlTag===false)) {
+						if ($SubName && ($XmlTag===false)) {
 							// Accept spaces in TBS subname.
 						} else {
 							$Status = 2;
 							$PosNend = $Pos;
 						}
-					} elseif ($XmlTag and ($Status===4)) {
+					} elseif ($XmlTag && ($Status===4)) {
 						self::f_Loc_PrmCompute($Txt,$Loc,$SubName,$Status,$XmlTag,$DelimChr,$DelimCnt,$PosName,$PosNend,$PosVal,$Pos,$WithPos);
 						$Status = 0;
 					}
-				} elseif (($XmlTag===false) and ($Chr===';')) {
+				} elseif (($XmlTag===false) && ($Chr===';')) {
 					self::f_Loc_PrmCompute($Txt,$Loc,$SubName,$Status,$XmlTag,$DelimChr,$DelimCnt,$PosName,$PosNend,$PosVal,$Pos,$WithPos);
 					$Status = 0;
 				} elseif ($Status===4) {
@@ -3596,7 +4752,7 @@ static function f_Loc_PrmRead(&$Txt,$Pos,$XmlTag,$DelimChrs,$BegStr,$EndStr,&$Lo
 				$PosEnd = strpos($Txt,$EndStr,$PosEnd+1);
 				if ($PosEnd===false) return;
 			} else {
-				if ($XmlTag and ($Txt[$Pos-1]==='/')) $Pos--; // In case last attribute is stuck to "/>"
+				if ($XmlTag && ($Txt[$Pos-1]==='/')) $Pos--; // In case last attribute is stuck to "/>"
 				self::f_Loc_PrmCompute($Txt,$Loc,$SubName,$Status,$XmlTag,$DelimChr,$DelimCnt,$PosName,$PosNend,$PosVal,$Pos,$WithPos);
 			}
 		}
@@ -3637,9 +4793,9 @@ static function f_Loc_PrmCompute(&$Txt,&$Loc,&$SubName,$Status,$XmlTag,$DelimChr
 				$v = true;
 			}
 			if ($x==='if') {
-				self::f_Loc_PrmIfThen($Loc,true,$v);
+				self::f_Loc_PrmIfThen($Loc, true, $v, true);
 			} elseif ($x==='then') {
-				self::f_Loc_PrmIfThen($Loc,false,$v);
+				self::f_Loc_PrmIfThen($Loc, false, $v, true);
 			} else {
 				$Loc->PrmLst[$x] = $v;
 				if ($WithPos) $Loc->PrmPos[$x] = array($PosName,$PosNend,$PosVal,$Pos,$DelimChr,$DelimCnt);
@@ -3649,10 +4805,19 @@ static function f_Loc_PrmCompute(&$Txt,&$Loc,&$SubName,$Status,$XmlTag,$DelimChr
 
 }
 
-static function f_Loc_PrmIfThen(&$Loc,$IsIf,$Val) {
-	$nbr = &$Loc->PrmIfNbr;
-	if ($nbr===false) {
-		$nbr = 0;
+/**
+ * Add a new parameter 'if or 'then' to the locator.
+ * 
+ * @param object  $Loc     The locator.
+ * @param boolean $IsIf    Concerned parameter. True means 'if', false means 'then'.
+ * @param string  $Val     The value of the parameter.
+ * @param boolean $Ordered True means the parameter comes from the template and order must be checked. False means it comes from PHP and order is free.
+ *
+ */
+static function f_Loc_PrmIfThen(&$Loc, $IsIf, $Val, $Ordered) {
+	$nb_if = &$Loc->PrmIfNbr;
+	if ($nb_if===false) {
+		$nb_if = 0;
 		$Loc->PrmIf = array();
 		$Loc->PrmIfVar = array();
 		$Loc->PrmThen = array();
@@ -3660,23 +4825,27 @@ static function f_Loc_PrmIfThen(&$Loc,$IsIf,$Val) {
 		$Loc->PrmElseVar = true;
 	}
 	if ($IsIf) {
-		$nbr++;
-		$Loc->PrmIf[$nbr] = $Val;
-		$Loc->PrmIfVar[$nbr] = true;
+		$nb_if++;
+		$Loc->PrmIf[$nb_if] = $Val;
+		$Loc->PrmIfVar[$nb_if] = true;
 	} else {
-		$nbr2 = $nbr;
-		if ($nbr2===false) $nbr2 = 1; // Only the first 'then' can be placed before its 'if'. This is for compatibility.
-		$Loc->PrmThen[$nbr2] = $Val;
-		$Loc->PrmThenVar[$nbr2] = true;
+		if ($Ordered) {
+			$nb_then = $nb_if;
+			if ($nb_then===false) $nb_then = 1; // Only the first 'then' can be placed before its 'if'. This is for compatibility.
+		} else {
+			$nb_then = count($Loc->PrmThen) + 1;
+		}
+		$Loc->PrmThen[$nb_then] = $Val;
+		$Loc->PrmThenVar[$nb_then] = true;
 	}
 }
 
-static function f_Loc_EnlargeToStr(&$Txt,&$Loc,$StrBeg,$StrEnd) {
 /*
 This function enables to enlarge the pos limits of the Locator.
 If the search result is not correct, $PosBeg must not change its value, and $PosEnd must be False.
 This is because of the calling function.
 */
+static function f_Loc_EnlargeToStr(&$Txt,&$Loc,$StrBeg,$StrEnd) {
 
 	// Search for the begining string
 	$Pos = $Loc->PosBeg;
@@ -3686,7 +4855,7 @@ This is because of the calling function.
 		if ($Pos!==false) {
 			if (substr($Txt,$Pos,strlen($StrBeg))===$StrBeg) $Ok = true;
 		}
-	} while ( (!$Ok) and ($Pos!==false) );
+	} while ( (!$Ok) && ($Pos!==false) );
 
 	if ($Ok) {
 		$PosEnd = strpos($Txt,$StrEnd,$Loc->PosEnd + 1);
@@ -3713,6 +4882,7 @@ static function f_Loc_EnlargeToTag(&$Txt,&$Loc,$TagStr,$RetInnerSrc) {
 	$i = 0;
 	$TagFct = array();
 	$TagLst = array();
+	$TagBnd = array();
 	while ($TagStr!=='') {
 		// get next tag
 		$p = strpos($TagStr, '+');
@@ -3723,31 +4893,49 @@ static function f_Loc_EnlargeToTag(&$Txt,&$Loc,$TagStr,$RetInnerSrc) {
 			$t = substr($TagStr,0,$p);
 			$TagStr = substr($TagStr,$p+1);
 		}
- 		do { // Check parentheses, relative position and single tag
- 			$t = trim($t);
+		// Check parentheses, relative position and single tag
+		do {
+			$t = trim($t);
 	 		$e = strlen($t) - 1; // pos of last char
-	 		if (($e>1) and ($t[0]==='(') and ($t[$e]===')')) {
+	 		if (($e>1) && ($t[0]==='(') && ($t[$e]===')')) {
 	 			if ($Ref===0) $Ref = $i;
 	 			if ($Ref===$i) $LevelStop++;
 	 			$t = substr($t,1,$e-1);
 	 		} else {
-	 			if (($e>=0) and ($t[$e]==='/')) $t = substr($t,0,$e); // for compatibilty
+	 			if (($e>=0) && ($t[$e]==='/')) $t = substr($t,0,$e); // for compatibilty
 	 			$e = false;
 	 		}
- 		} while ($e!==false);
+		} while ($e!==false);
+		// Check for multiples
+		$p = strpos($t, '*');
+		if ($p!==false) {
+			$n = intval(substr($t, 0, $p));
+			$t = substr($t, $p + 1);
+			$n = max($n ,1); // prevent for error: minimum valu is 1
+			$TagStr = str_repeat($t . '+', $n-1) . $TagStr;
+		}
+		// Reference
+		if (($t==='.') && ($Ref===0)) $Ref = $i;
+		// Take of the (!) prefix
+		$b = '';
+		if (($t!=='') && ($t[0]==='!')) {
+			$t = substr($t, 1);
+			$b = '!';
+		}
+		// Block alias
+		$a = false;
 		if (isset($AliasLst[$t])) {
-			$a = $AliasLst[$t];
+			$a = $AliasLst[$t]; // a string or a function
 			if (is_string($a)) {
 				if ($i>999) return false; // prevent from circular alias
-				$TagStr = ($TagStr==='') ? $a : $a.'+'.$TagStr;
-			} else {
-				$TagLst[$i] = $t;
-				$TagFct[$i] = $a;
-				$i++;
+				$TagStr = $b . $a . (($TagStr==='') ? '' : '+') . $TagStr;
+				$t = false;
 			}
-		} else {
-			$TagLst[$i] = $t;
-			$TagFct[$i] = false;
+		}
+		if ($t!==false) {
+			$TagLst[$i] = $t; // with prefix ! if specified
+			$TagFct[$i] = $a;
+			$TagBnd[$i] = ($b==='');
 			$i++;
 		}
 	}
@@ -3758,18 +4946,30 @@ static function f_Loc_EnlargeToTag(&$Txt,&$Loc,$TagStr,$RetInnerSrc) {
 	if ($LevelStop===0) $LevelStop = 1;
 
 	// First tag of reference
-	$TagO = self::f_Loc_Enlarge_Find($Txt,$TagLst[$Ref],$TagFct[$Ref],$Loc->PosBeg-1,false,$LevelStop);
-	if ($TagO===false) return false;
-	$PosBeg = $TagO->PosBeg;
-	$LevelStop += -$TagO->RightLevel; // RightLevel=1 only if the tag is single and embeds $Loc, otherwise it is 0 
-	if ($LevelStop>0) {
-		$TagC = self::f_Loc_Enlarge_Find($Txt,$TagLst[$Ref],$TagFct[$Ref],$Loc->PosEnd+1,true,-$LevelStop);
-		if ($TagC==false) return false;
-		$PosEnd = $TagC->PosEnd;
-		$InnerLim = $TagC->PosBeg;
+	if ($TagLst[$Ref] === '.') {
+		$TagO = new clsTbsLocator;
+		$TagO->PosBeg = $Loc->PosBeg;
+		$TagO->PosEnd = $Loc->PosEnd;
+		$PosBeg = $Loc->PosBeg;
+		$PosEnd = $Loc->PosEnd;
 	} else {
-		$PosEnd = $TagO->PosEnd;
-		$InnerLim = $PosEnd + 1;
+		$TagO = self::f_Loc_Enlarge_Find($Txt,$TagLst[$Ref],$TagFct[$Ref],$Loc->PosBeg-1,false,$LevelStop);
+		if ($TagO===false) return false;
+		$PosBeg = $TagO->PosBeg;
+		$LevelStop += -$TagO->RightLevel; // RightLevel=1 only if the tag is single and embeds $Loc, otherwise it is 0 
+		if ($LevelStop>0) {
+			$TagC = self::f_Loc_Enlarge_Find($Txt,$TagLst[$Ref],$TagFct[$Ref],$Loc->PosEnd+1,true,-$LevelStop);
+			if ($TagC==false) return false;
+			$PosEnd = $TagC->PosEnd;
+			$InnerLim = $TagC->PosBeg;
+			if ((!$TagBnd[$Ref]) && ($TagMax==0)) {
+				$PosBeg = $TagO->PosEnd + 1;
+				$PosEnd = $TagC->PosBeg - 1;
+			}
+		} else {
+			$PosEnd = $TagO->PosEnd;
+			$InnerLim = $PosEnd + 1;
+		}
 	}
 
 	$RetVal = true;
@@ -3783,9 +4983,12 @@ static function f_Loc_EnlargeToTag(&$Txt,&$Loc,$TagStr,$RetInnerSrc) {
 	$TagC = true;
 	for ($i=$Ref+1;$i<=$TagMax;$i++) {
 		$x = $TagLst[$i];
-		if (($x!=='') and ($TagC!==false)) {
-			$TagC = self::f_Loc_Enlarge_Find($Txt,$x,$TagFct[$i],$PosEnd+1,true,0);
-			if ($TagC!==false) $PosEnd = $TagC->PosEnd;
+		if (($x!=='') && ($TagC!==false)) {
+			$level = ($TagBnd[$i]) ? 0 : 1;
+			$TagC = self::f_Loc_Enlarge_Find($Txt,$x,$TagFct[$i],$PosEnd+1,true,$level);
+			if ($TagC!==false) {
+				$PosEnd = ($TagBnd[$i]) ? $TagC->PosEnd : $TagC->PosBeg -1 ;
+			}
 		}
 	}
 
@@ -3793,9 +4996,12 @@ static function f_Loc_EnlargeToTag(&$Txt,&$Loc,$TagStr,$RetInnerSrc) {
 	$TagO = true;
 	for ($i=$Ref-1;$i>=0;$i--) {
 		$x = $TagLst[$i];
-		if (($x!=='') and ($TagO!==false)) {
-			$TagO = self::f_Loc_Enlarge_Find($Txt,$x,$TagFct[$i],$PosBeg-1,false,0);
-			if ($TagO!==false) $PosBeg = $TagO->PosBeg;
+		if (($x!=='') && ($TagO!==false)) {
+			$level = ($TagBnd[$i]) ? 0 : -1;
+			$TagO = self::f_Loc_Enlarge_Find($Txt,$x,$TagFct[$i],$PosBeg-1,false,$level);
+			if ($TagO!==false) {
+				$PosBeg = ($TagBnd[$i]) ? $TagO->PosBeg : $TagO->PosEnd + 1;
+			}
 		}
 	}
 
@@ -3818,25 +5024,102 @@ static function f_Loc_Enlarge_Find($Txt, $Tag, $Fct, $Pos, $Forward, $LevelStop)
 	}
 }
 
+/**
+ * Return the expected value for a boolean attribute
+ */
 static function f_Loc_AttBoolean($CurrVal, $AttTrue, $AttName) {
-// Return the good value for a boolean attribute
+	
 	if ($AttTrue===true) {
-		if ((string)$CurrVal==='') {
+		if (self::meth_Misc_ToStr($CurrVal)==='') {
 			return '';
 		} else {
 			return $AttName;
 		}
-	} elseif ((string)$CurrVal===$AttTrue) {
+	} elseif (self::meth_Misc_ToStr($CurrVal)===$AttTrue) {
 		return $AttName;
 	} else {
 		return '';
 	}
+	
 }
 
-static function f_Xml_AttFind(&$Txt,&$Loc,$Move=false,$AttDelim=false) {
+/**
+ * Affects the positions of a list of locators regarding to a specific moving locator.
+ */
+static function f_Loc_Moving(&$LocM, &$LocLst) {
+	foreach ($LocLst as &$Loc) {
+		if ($Loc !== $LocM) {
+			if ($Loc->PosBeg >= $LocM->InsPos) {
+				$Loc->PosBeg += $LocM->InsLen;
+				$Loc->PosEnd += $LocM->InsLen;
+			}
+			if ($Loc->PosBeg > $LocM->DelPos) {
+				$Loc->PosBeg -= $LocM->DelLen;
+				$Loc->PosEnd -= $LocM->DelLen;
+			}
+		}
+	}
+	return true;
+}
+
+/**
+ * Sort the locators in the list. Apply the bubble algorithm.
+ * Deleted locators maked with DelMe.
+ * @param array   $LocLst An array of locators.
+ * @param boolean $DelEmbd True to deleted locators that embded other ones.
+ * @param boolean $iFirst Index of the first item.
+ * @return integer Return the number of met embedding locators.
+ */
+static function f_Loc_Sort(&$LocLst, $DelEmbd, $iFirst = 0) {
+
+	$iLast = $iFirst + count($LocLst) - 1;
+	$embd = 0;
+	
+	for ($i = $iLast ; $i>=$iFirst ; $i--) {
+		$Loc = $LocLst[$i];
+		$d = (isset($Loc->DelMe) && $Loc->DelMe);
+		$b = $Loc->PosBeg;
+		$e = $Loc->PosEnd;
+		for ($j=$i+1; $j<=$iLast ; $j++) {
+			// If DelMe, then the loc will be put at the end and deleted
+			$jb = $LocLst[$j]->PosBeg;
+			if ($d || ($b > $jb)) {
+				$LocLst[$j-1] = $LocLst[$j];
+				$LocLst[$j] = $Loc;
+			} elseif ($e > $jb) {
+				$embd++;
+				if ($DelEmbd) {
+					$d = true;
+					$j--; // replay the current position
+				} else {
+					$j = $iLast; // quit the loop
+				}
+			} else {
+				$j = $iLast; // quit the loop
+			}
+		}
+		if ($d) {
+			unset($LocLst[$iLast]);
+			$iLast--;
+		}
+	}
+	
+	return $embd;
+}
+
+/**
+ * Prepare all informations to move a locator according to parameter "att".
+ *
+ * @param false|true|array $MoveLocLst true to simple move the loc, or an array of loc to rearrange the list after the move.
+ *                          Note: rearrange doest not work with PHP4.
+ */
+static function f_Xml_AttFind(&$Txt,&$Loc,$MoveLocLst=false,$AttDelim=false,$LocLst=false) {
 // att=div#class ; att=((div))#class ; att=+((div))#class
 
 	$Att = $Loc->PrmLst['att'];
+	unset($Loc->PrmLst['att']); // prevent from processing the field twice
+	$Loc->PrmLst['att;'] = $Att; // for debug
+
 	$p = strrpos($Att,'#');
 	if ($p===false) {
 		$TagLst = '';
@@ -3854,7 +5137,7 @@ static function f_Xml_AttFind(&$Txt,&$Loc,$Move=false,$AttDelim=false) {
 	$LocO = &$Loc;
 	foreach ($TagLst as $i=>$Tag) {
 		$LevelStop = false;
-		while ((strlen($Tag)>1) and (substr($Tag,0,1)==='(') and (substr($Tag,-1,1)===')')) {
+		while ((strlen($Tag)>1) && (substr($Tag,0,1)==='(') && (substr($Tag,-1,1)===')')) {
 			if ($LevelStop===false) $LevelStop = 0;
 			$LevelStop++;
 			$Tag = trim(substr($Tag,1,strlen($Tag)-2));
@@ -3878,7 +5161,8 @@ static function f_Xml_AttFind(&$Txt,&$Loc,$Move=false,$AttDelim=false) {
 		}
 		if ($Att==='.') return false;
 	}
-		
+	$Loc->AttName = $Att;
+	
 	$AttLC = strtolower($Att);
 	if (isset($LocO->PrmLst[$AttLC])) {
 		// The attribute is existing
@@ -3888,7 +5172,7 @@ static function f_Xml_AttFind(&$Txt,&$Loc,$Move=false,$AttDelim=false) {
 		$Loc->AttEnd = $p[3];
 		$Loc->AttDelimCnt = $p[5];
 		$Loc->AttDelimChr = $p[4];
-		if (($p[1]>$p[0]) and ($p[2]>$p[1])) {
+		if (($p[1]>$p[0]) && ($p[2]>$p[1])) {
 			//$Loc->AttNameEnd =  $p[1];
 			$Loc->AttValBeg = $p[2];
 		} else { // attribute without value
@@ -3899,34 +5183,40 @@ static function f_Xml_AttFind(&$Txt,&$Loc,$Move=false,$AttDelim=false) {
 		// The attribute is not yet existing
 		$Loc->AttDelimCnt = 0;
 		$Loc->AttBeg = false;
-		$Loc->AttName = $Att;
 	}
 	
 	// Search for a delimitor
-	if (($Loc->AttDelimCnt==0) and (isset($LocO->PrmPos))) {
+	if (($Loc->AttDelimCnt==0) && (isset($LocO->PrmPos))) {
 		foreach ($LocO->PrmPos as $p) {
 			if ($p[5]>0) $Loc->AttDelimChr = $p[4];
 		}
 	}
 
-	if ($Move) return self::f_Xml_AttMove($Txt,$Loc,$AttDelim);
+	if ($MoveLocLst) return self::f_Xml_AttMove($Txt,$Loc,$AttDelim,$MoveLocLst);
 
 	return true;
 
 }
 
-static function f_Xml_AttMove(&$Txt, &$Loc, $AttDelim=false) {
+/**
+ * Move a locator in the source from its original location to the attribute location.
+ * The new locator string is only '[]', no need to copy the full source since all parameters are saved in $Loc.*
+ *
+ * @param false|true|array $MoveLocLst If the function is called from the caching process, then this value is an array.
+ */
+static function f_Xml_AttMove(&$Txt, &$Loc, $AttDelim, &$MoveLocLst) {
 
-  if ($AttDelim===false) $AttDelim = $Loc->AttDelimChr;
-  if ($AttDelim===false) $AttDelim = '"';
+	if ($AttDelim===false) $AttDelim = $Loc->AttDelimChr;
+	if ($AttDelim===false) $AttDelim = '"';
 
-	$sz = $Loc->PosEnd - $Loc->PosBeg + 1;
-	$Txt = substr_replace($Txt,'',$Loc->PosBeg,$sz); // delete the current locator
+	$DelPos = $Loc->PosBeg;
+	$DelLen = $Loc->PosEnd - $Loc->PosBeg + 1;
+	$Txt = substr_replace($Txt,'',$DelPos,$DelLen); // delete the current locator
 	if ($Loc->AttForward) {
-		$Loc->AttTagBeg += -$sz;
-		$Loc->AttTagEnd += -$sz;
+		$Loc->AttTagBeg += -$DelLen;
+		$Loc->AttTagEnd += -$DelLen;
 	} elseif ($Loc->PosBeg<$Loc->AttTagEnd) {
-		$Loc->AttTagEnd += -$sz;
+		$Loc->AttTagEnd += -$DelLen;
 	}
 
 	$InsPos = false;
@@ -3939,8 +5229,8 @@ static function f_Xml_AttMove(&$Txt, &$Loc, $AttDelim=false) {
 		$Loc->AttBeg = $InsPos + 1;
 		$Loc->AttValBeg = $InsPos + strlen($Ins1) - 1;
 	} else {
-		if ($Loc->PosEnd<$Loc->AttBeg) $Loc->AttBeg += -$sz;
-		if ($Loc->PosEnd<$Loc->AttEnd) $Loc->AttEnd += -$sz;
+		if ($Loc->PosEnd<$Loc->AttBeg) $Loc->AttBeg += -$DelLen;
+		if ($Loc->PosEnd<$Loc->AttEnd) $Loc->AttEnd += -$DelLen;
 		if ($Loc->AttValBeg===false) {
 			$InsPos = $Loc->AttEnd+1;
 			$Ins1 = '='.$AttDelim;
@@ -3952,7 +5242,7 @@ static function f_Xml_AttMove(&$Txt, &$Loc, $AttDelim=false) {
 			$Ins2 = '';
 		} else {
 			// value already existing
-			if ($Loc->PosEnd<$Loc->AttValBeg) $Loc->AttValBeg += -$sz;
+			if ($Loc->PosEnd<$Loc->AttValBeg) $Loc->AttValBeg += -$DelLen;
 			$PosBeg = $Loc->AttValBeg;
 			$PosEnd = $Loc->AttEnd;
 			if ($Loc->AttDelimCnt>0) {$PosBeg++; $PosEnd--;}
@@ -3971,14 +5261,20 @@ static function f_Xml_AttMove(&$Txt, &$Loc, $AttDelim=false) {
 		$Loc->AttTagEnd += $InsLen;
 	}
 
-	$Loc->PrevPosBeg = $Loc->PosBeg;
-	$Loc->PrevPosEnd = $Loc->PosEnd;
 	$Loc->PosBeg = $PosBeg;
 	$Loc->PosEnd = $PosEnd;
-	$Loc->AttBegM = ($Txt[$Loc->AttBeg-1]===' ') ? $Loc->AttBeg-1 : $Loc->AttBeg; // for magnet=#
-	$Loc->AttInsLen = $InsLen; // for CacheField
 
-	return min($Loc->PrevPosEnd,$Loc->PosEnd); // New position to continue the search.
+	// for CacheField
+	if (is_array($MoveLocLst)) {
+		$Loc->InsPos = $InsPos;
+		$Loc->InsLen = $InsLen;
+		$Loc->DelPos = $DelPos;
+		if ($Loc->InsPos < $Loc->DelPos) $Loc->DelPos += $InsLen;
+		$Loc->DelLen = $DelLen;
+		self::f_Loc_Moving($Loc, $MoveLocLst);
+	}
+	
+	return true;
 
 }
 
@@ -4004,21 +5300,21 @@ static function f_Xml_Max(&$Txt,&$Nbr,$MaxEnd) {
 				$n++;
 			}
 		}
-		if (($n>=$Nbr) or ($p>=$pMax)) {
+		if (($n>=$Nbr) || ($p>=$pMax)) {
 			$ok = false;
 		} else {
 			$p++;
 		}
 	}
 
-	if (($n>=$Nbr) and ($p<$pMax)) $Txt = substr($Txt,0,$p).$MaxEnd;
+	if (($n>=$Nbr) && ($p<$pMax)) $Txt = substr($Txt,0,$p).$MaxEnd;
 
 }
 
 static function f_Xml_GetPart(&$Txt, $TagLst, $AllIfNothing=false) {
 // Returns parts of the XML/HTML content, default is BODY.
 
-	if (($TagLst===true) or ($TagLst==='')) $TagLst = 'body';
+	if (($TagLst===true) || ($TagLst==='')) $TagLst = 'body';
 
 	$x = '';
 	$nothing = true;
@@ -4026,7 +5322,7 @@ static function f_Xml_GetPart(&$Txt, $TagLst, $AllIfNothing=false) {
 
 	// Build a clean list of tags
 	foreach ($TagLst as $i=>$t) {
-		if ((substr($t,0,1)=='(') and (substr($t,-1,1)==')')) {
+		if ((substr($t,0,1)=='(') && (substr($t,-1,1)==')')) {
 			$t = substr($t,1,strlen($t)-2);
 			$Keep = true;
 		} else {
@@ -4088,18 +5384,19 @@ static function f_Xml_GetPart(&$Txt, $TagLst, $AllIfNothing=false) {
 
 	} while ($TagMin!==false);
 	
-	if ($AllIfNothing and $nothing) return $Txt;
+	if ($AllIfNothing && $nothing) return $Txt;
 	return $x;
 
 }
 
+/**
+ * Find the start position of an XML tag. Used by OpenTBS.
+ * $Case=false can be useful for HTML.
+ * $Tag=''  should work and found the start of the first opening tag of any name.
+ * $Tag='/' should work and found the start of the first closing tag of any name.
+ * Encapsulation levels are not featured yet.
+ */
 static function f_Xml_FindTagStart(&$Txt,$Tag,$Opening,$PosBeg,$Forward,$Case=true) {
-/* Find the start of an XML tag.
-$Case=false can be useful for HTML.
-$Tag='' should work and found the start of the first tag.
-$Tag='/' should work and found the start of the first closing tag.
-Encapsulation levels are not feataured yet.
-*/
 
 	if ($Txt==='') return false;
 
@@ -4112,7 +5409,6 @@ Encapsulation levels are not feataured yet.
 		do {
 			if ($Forward) $p = strpos($Txt,$x,$p+1);  else $p = strrpos(substr($Txt,0,$p+1),$x);
 			if ($p===false) return false;
-			if (substr($Txt,$p,$xl)!==$x) continue; // For PHP 4 only
 			$z = substr($Txt,$p+$xl,1);
 		} while ( ($z!==' ') && ($z!=="\r") && ($z!=="\n") && ($z!=='>') && ($z!=='/') && ($Tag!=='/') && ($Tag!=='') );
 	} else {
@@ -4127,13 +5423,14 @@ Encapsulation levels are not feataured yet.
 
 }
 
+/**
+ * This function is a smart solution to find an XML tag.
+ * It allows to ignore full opening/closing couple of tags that could be inserted before the searched tag.
+ * It allows also to pass a number of encapsulations.
+ * To ignore encapsulation and opengin/closing just set $LevelStop=false.
+ * $Opening is used only when $LevelStop=false.
+ */
 static function f_Xml_FindTag(&$Txt,$Tag,$Opening,$PosBeg,$Forward,$LevelStop,$WithPrm,$WithPos=false) {
-/* This function is a smart solution to find an XML tag.
-It allows to ignore full opening/closing couple of tags that could be inserted before the searched tag.
-It allows also to pass a number of encapsulations.
-To ignore encapsulation and opengin/closing just set $LevelStop=false.
-$Opening is used only when $LevelStop=false.
-*/
 
 	if ($Tag==='_') { // New line
 		$p = self::f_Xml_FindNewLine($Txt,$PosBeg,$Forward,($LevelStop!==0));
@@ -4171,10 +5468,12 @@ $Opening is used only when $LevelStop=false.
 
 			// Check the name of the tag
 			if (strcasecmp(substr($Txt,$Pos+1,$TagL),$Tag)==0) {
+				// It's an opening tag
 				$PosX = $Pos + 1 + $TagL; // The next char
 				$TagOk = true;
 				$TagIsOpening = true;
 			} elseif (strcasecmp(substr($Txt,$Pos+1,$TagClosingL),$TagClosing)==0) {
+				// It's a closing tag
 				$PosX = $Pos + 1 + $TagClosingL; // The next char
 				$TagOk = true;
 				$TagIsOpening = false;
@@ -4183,16 +5482,16 @@ $Opening is used only when $LevelStop=false.
 			if ($TagOk) {
 				// Check the next char
 				$x = $Txt[$PosX];
-				if (($x===' ') or ($x==="\r") or ($x==="\n") or ($x==='>') or ($Tag==='/') or ($Tag==='')) {
+				if (($x===' ') || ($x==="\r") || ($x==="\n") || ($x==='>') || ($x==='/') || ($Tag==='/') || ($Tag==='')) {
 					// Check the encapsulation count
-					if ($LevelStop===false) { // No encaplusation check
+					if ($LevelStop===false) { // No encapsulation check
 						if ($TagIsOpening!==$Opening) $TagOk = false;
 					} else { // Count the number of level
 						if ($TagIsOpening) {
 							$PosEnd = strpos($Txt,'>',$PosX);
 							if ($PosEnd!==false) {
 								if ($Txt[$PosEnd-1]==='/') {
-									if (($Pos<$PosBeg) and ($PosEnd>$PosBeg)) {$RightLevel=1; $LevelNum++;}
+									if (($Pos<$PosBeg) && ($PosEnd>$PosBeg)) {$RightLevel=1; $LevelNum++;}
 								} else {
 									$LevelNum++;
 								}
@@ -4212,7 +5511,7 @@ $Opening is used only when $LevelStop=false.
 			} //--> if ($TagOk)
 
 		}
-	} while (($Pos!==false) and ($TagOk===false));
+	} while (($Pos!==false) && ($TagOk===false));
 
 	// Search for the end of the tag
 	if ($TagOk) {
@@ -4255,18 +5554,44 @@ static function f_Xml_FindNewLine(&$Txt,$PosBeg,$Forward,$IsRef) {
 	do {
 		if ($Inf>$Sup) return max($Sup,0);
 		$x = $Txt[$p];
-		if (($x==="\r") or ($x==="\n")) {
+		if (($x==="\r") || ($x==="\n")) {
 			$x2 = ($x==="\n") ? "\r" : "\n";
 			$p0 = $p;
-			if (($Inf<$Sup) and ($Txt[$p+$Inc]===$x2)) $p += $Inc; // Newline char can have two chars.
+			if (($Inf<$Sup) && ($Txt[$p+$Inc]===$x2)) $p += $Inc; // Newline char can have two chars.
 			if ($Forward) return $p; // Forward => return pos including newline char.
-			if ($IsRef or ($p0!=$PosBeg)) return $p0+1; // Backwars => return pos without newline char. Ignore newline if it is the very first char of the search.
+			if ($IsRef || ($p0!=$PosBeg)) return $p0+1; // Backwars => return pos without newline char. Ignore newline if it is the very first char of the search.
 		}
 		$p += $Inc;
 	} while (true);
 
 }
 
+static function f_Xml_GetNextEntityName($Txt, $Pos, &$tag, &$PosBeg, &$p) {
+/* 
+ $tag : tag name
+ $PosBeg : position of the tag
+ $p   : position where the read has stop
+ $z   : first char after the name
+*/
+
+	$tag = '';
+	$PosBeg = strpos($Txt, '<', $Pos);
+	
+	if ($PosBeg===false) return false;
+	
+	// Read the name of the tag
+	$go = true;
+	$p = $PosBeg;
+	while ($go) {
+		$p++;
+		$z = $Txt[$p];
+		if ($go = ($z!==' ') && ($z!=="\r") && ($z!=="\n") && ($z!=='>') && ($z!=='/') ) {
+			$tag .= $z;
+		}
+	}
+	
+	return true;
+	
 }
 
-?>
+}
