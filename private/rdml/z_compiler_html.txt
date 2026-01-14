@@ -129,8 +129,6 @@ function L_emit_field(x)
 	myY  += "</head>\n";
 	myY  += "<body>\n";
 
-	myY  += '<img src="images/lansagif.gif">\n';
-	
 	myY  += "<form name=\"FORM\" action=\"[onshow.CurrentScript]\" method=\"POST\">\n";
 		
 	myY  +="<table><tr> <th> </th> <th> </th> <th> </th> </tr>\n";							// empty row to build columns
