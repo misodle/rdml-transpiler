@@ -1,16 +1,24 @@
 @ECHO OFF
+
 set /p ProgramName= Enter Program to compile (name not name.txt)?
 set /p Html= Compile HTML (Yes/No)?
+set /p DumpAST= Dump Abstract Syntax Tree (Yes/No)?
 call:toLower ProgramName
 
 @ECHO ON
-"%~dp0..\spidermonkey\js.exe" "%~dp0z_compile1.js" %ProgramName% < %ProgramName%.txt > %ProgramName%.php 
+"%~dp0..\spidermonkey\js.exe" "%~dp0z_compilePHP.js" %ProgramName% < %ProgramName%.txt > %ProgramName%.php 
 
 @ECHO OFF
 if /i (%Html%)==(y) set "Html=yes"
 
 @ECHO ON
-if /i (%Html%)==(yes) ("%~dp0..\spidermonkey\js.exe" "%~dp0z_compile2.js" %ProgramName% < %ProgramName%.txt > %ProgramName%.html)
+if /i (%Html%)==(yes) ("%~dp0..\spidermonkey\js.exe" "%~dp0z_compileHTML.js" %ProgramName% < %ProgramName%.txt > %ProgramName%.html)
+
+@ECHO OFF
+if /i (%DumpAST%)==(y) set "DumpAST=yes"
+
+@ECHO ON
+if /i (%DumpAST%)==(yes) ("%~dp0..\spidermonkey\js.exe" "%~dp0z_dumpAST.js" %ProgramName% < %ProgramName%.txt > %ProgramName%.ast)
 
 @ECHO OFF
 echo.

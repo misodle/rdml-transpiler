@@ -236,7 +236,7 @@ function getPostedList($_listname,$_field_array)
 						if (in_array("*HIDE",$attrArray)) $inpField = true;
 						if (in_array("*OUT",$attrArray))  $inpField = false;
 						if (in_array("*LC",$attrArray))   $lowerCase = true;
-						if (inpField == true) {									// only accept input fields
+						if ($inpField == true) {									// only accept input fields
 							if ($lowerCase == false) $_work_array[$_var] = strtoupper($_postvalue);
 							if ($lowerCase == true)  $_work_array[$_var] = $_postvalue;
 						}

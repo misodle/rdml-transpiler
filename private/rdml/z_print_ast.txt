@@ -1,0 +1,8 @@
+
+ometa CalcCompiler {
+  ast     	= [array*:x]                    -> x.join(''),
+  array   	= ['stmt' :x]                   -> (x + '\n')  
+			| ['noop']                      -> ('')  
+			| ['start']                     -> ('[start]\n')  
+			| ['end']                       -> ('[end]\n')    
+} 

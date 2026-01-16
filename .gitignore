@@ -1,2 +1,7 @@
+
+# keep SQL keys private (do no push to repo)
 .env.local
-ReadMe.txt
+
+# wip, do not publish
+wip/
+

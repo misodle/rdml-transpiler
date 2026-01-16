@@ -249,53 +249,62 @@ function findFieldType(f,t)
 	return bindType;
 }
 function getMysqliBindType(mysqlType) {
-  // Normalize: uppercase, strip size/precision, remove modifiers
-  var type = mysqlType.trim().toUpperCase();
-  type = type.replace(/\(.*\)/, '');
-  type = type.replace(/\s+(UNSIGNED|ZEROFILL|SIGNED)/g, '');
-  type = type.trim();
+	return 's';
+	// Normalize: uppercase, strip size/precision, remove modifiers
+	let type = mysqlType.trim().toUpperCase();
+	type = type.replace(/\(.*\)/, '');
+	type = type.replace(/\s+(UNSIGNED|ZEROFILL|SIGNED)/g, '');
+	type = type.trim();
 
-  var intTypes = [
-    'TINYINT', 'SMALLINT', 'MEDIUMINT', 'INT', 'INTEGER',
-    'BIT', 'BOOL', 'BOOLEAN', 'YEAR'
-  ];
+	const intTypes = [
+		'TINYINT', 'SMALLINT', 'MEDIUMINT', 'INT', 'INTEGER',
+		'BIT', 'BOOL', 'BOOLEAN', 'YEAR'
+	];
 
-  var floatTypes = [
-    'FLOAT', 'DOUBLE', 'DOUBLE PRECISION', 'REAL', 'DECIMAL'
-  ];
+	const floatTypes = [
+		'FLOAT', 'DOUBLE', 'DOUBLE PRECISION', 'REAL'
+	];
 
-  var stringTypes = [
-    'CHAR', 'VARCHAR',
-    'TINYTEXT', 'TEXT', 'MEDIUMTEXT', 'LONGTEXT',
-    'DECIMAL', 'DEC', 'NUMERIC', 'FIXED',
-    'BIGINT',
-    'DATE', 'TIME', 'DATETIME', 'TIMESTAMP',
-    'ENUM', 'SET', 'JSON',
-    'GEOMETRY', 'POINT', 'LINESTRING', 'POLYGON',
-    'MULTIPOINT', 'MULTILINESTRING', 'MULTIPOLYGON',
-    'GEOMETRYCOLLECTION'
-  ];
+	const stringTypes = [
+		// Character
+		'CHAR', 'VARCHAR',
+		// Text
+		'TINYTEXT', 'TEXT', 'MEDIUMTEXT', 'LONGTEXT',
+		// Exact numeric (string to preserve precision)
+		'DECIMAL', 'DEC', 'NUMERIC', 'FIXED',
+		// Large integer (string to avoid overflow)
+		'BIGINT',
+		// Date/time
+		'DATE', 'TIME', 'DATETIME', 'TIMESTAMP',
+		// Other
+		'ENUM', 'SET', 'JSON',
+		// Spatial
+		'GEOMETRY', 'POINT', 'LINESTRING', 'POLYGON',
+		'MULTIPOINT', 'MULTILINESTRING', 'MULTIPOLYGON',
+		'GEOMETRYCOLLECTION'
+	];
 
-  var blobTypes = [
-    'TINYBLOB', 'BLOB', 'MEDIUMBLOB', 'LONGBLOB',
-    'BINARY', 'VARBINARY'
-  ];
+	const blobTypes = [
+		'TINYBLOB', 'BLOB', 'MEDIUMBLOB', 'LONGBLOB',
+		'BINARY', 'VARBINARY'
+	];
 
-  if (intTypes.indexOf(type) !== -1) {
-    return 'i';
-  }
-  if (floatTypes.indexOf(type) !== -1) {
-    return 'd';
-  }
-  if (stringTypes.indexOf(type) !== -1) {
-    return 's';
-  }
-  if (blobTypes.indexOf(type) !== -1) {
-    return 'b';
-  }
+	if (intTypes.includes(type)) {
+		return 'i';
+	}
+	if (floatTypes.includes(type)) {
+		return 'd';
+	}
+	if (stringTypes.includes(type)) {
+		return 's';
+	}
+	if (blobTypes.includes(type)) {
+		return 'b';
+	}
 
-  print('Unknown MySQL type: ' + type + " - defaulting to 's'");
-  return 's';
+	// Unknown type: log it and default to string
+	console.warn(`Unknown MySQL type: ${type} - defaulting to 's'`);
+	return 's';
 }
 function getAllFields(t)
 {
@@ -347,8 +356,8 @@ function formatWhere(w,t)
 		var str1 = match.toUpperCase();
 		var str2 = str1.substr(1,str1.length-1);
 		var str3 = '$' + str2;
-		var bindType = findFieldType(str2,t);
-		if (bindType == 's')
+		var is_string = findFieldType(str2,t);
+		if (is_string == true)
 		{
 			return  "' . '\\'' . " + str3 + " . '\\'' . '";
 		} 
@@ -417,7 +426,7 @@ function l_select(t,f,w,k,o,l)
 			if (inSubr == "N" && main_body_id_stack.indexOf(field) == -1) main_body_id_stack.push(field);   	
 			type += findFieldType(field,t);
 			bind += ',$' + field;
-			withkey += " . ' " + field + "=? '";		
+			withkey += " . '" + field + "=' . ?" + " ";		
 			if (i < k.length - 1) withkey += " . ' and '";
 		}
 		where = " . ' where '" + withkey;

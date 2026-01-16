@@ -28,8 +28,57 @@ if cond(#start <= 0)
 #start := 0
 endif
 
-Select Fields(*all) From_File(nfl_player_defense) limit(#start,#limit)
+// OK
+//Select Fields(*all) From_File(nfl_player_defense) limit(#start,#limit)
+//	add_entry to_list(#list1)
+//endselect
+
+// OK
+//Select Fields(*all) From_File(nfl_player_defense) limit(#limit)
+//	add_entry to_list(#list1)
+//endselect
+
+// OK - fixed for SQL injection (input fields could come from client)
+//#season_id := 0
+//#position_id := "LB"
+//Select Fields(*all) From_File(nfl_player_defense) with_key(#season_id #position_id) limit(#start,#limit)
+//	add_entry to_list(#list1)
+//endselect
+//generates currently: select * from nfl_player_defense where SEASON_ID=? and POSITION_ID=? ORDER BY SEASON_ID, PLAYER_ID LIMIT ?,?
+
+//FAILS
+//#dummy_variable := 0
+//Select Fields(*all) From_File(nfl_player_defense) with_key(#dummy_variable) limit(#start,#limit)
+//	add_entry to_list(#list1)
+//endselect
+
+//TODO
+//Case 1 : where(#position_id = "LB")   // sb #position_id -> position_id
+//Case 2 : where(#position_id = 'LB')	// any form of LB should transform to 'LB'  (depending on settings "x" can mean column)
+//Case 3 : where(#position_id = LB)		// this form of where (not select_sql can not merge in variables, hard code only)
+// convert #fld to fld, " to ', wrap text by 'x', numeric leave alone 
+
+
+// OK ??
+#season_id := 0
+#nfl_team_id3 := "CHI"
+Select Fields(*all) From_File(nfl_player_defense) where(position_id = "LB") with_key(#season_id #nfl_team_id3) limit(#start,#limit)
 	add_entry to_list(#list1)
 endselect
+
+// FAILS/* this is currently not working
+//Select Fields(*all) From_File(nfl_player_defense) where(position_id = 'LB') limit(#start,#limit)
+//	add_entry to_list(#list1)
+//endselect
+
+// OK - this works
+//#position_id := "LB"
+//Select Fields(*all) From_File(nfl_player_defense) where(position_id = #position_id) limit(#start,#limit)
+//	add_entry to_list(#list1)
+//endselect
+
+
+
+
 		
 Request Fields((#season_id *hide) (#player_id *hide) (#std_button *hide) (#start *hide) #list1 )  
