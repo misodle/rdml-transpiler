@@ -32,11 +32,11 @@ The task of converting an application written in the above mentioned tool (or fa
 
 The point of this project is to focus on the web based aspects and extract business logic where possible. All of the backend business logic which is not interface related or inside the rules engine is by necessity RDML or RDMLX (OO based syntax) and should be convertable into any language. Just like there are many companies running COBOL applications there are many running RDML or RDMLX based applications which may need to modernize.
 
-The web interface aspect of this project seeks to implement a simple template based SSR application which is compatible with PHP. This is compatible with both WebEvent and WAM applications. VL Web is a SPA, so the conversion would not be as straight foward. The current implementation uses the template engine TinyButStrong (https://www.tinybutstrong.com) for demostration purposes, but this could be compatible with any number of frameworks including HTMX, HyperScript, or Alpine.js. 
+The web interface aspect of this project seeks to implement a simple template based SSR application which is compatible with PHP. This is compatible with both WebEvent and WAM applications. VL Web is a SPA, so the conversion would not be as straight foward. The current implementation uses the template engine TinyButStrong (https://www.tinybutstrong.com) for demonstration purposes, but this could be compatible with any number of frameworks including HTMX, HyperScript, or Alpine.js. 
 
 ### Request for features
 
-This is currently a proof of concept. To request a feature or report a bug, please open an issue. Until such tima as there are actual users or version 1.0 is released, non backwards compatible behaviour can occur at anytime.
+This is currently a proof of concept. To request a feature or report a bug, please open an issue. Until version 1.0 is released, non backwards compatible behaviour can occur.
 
 
 
