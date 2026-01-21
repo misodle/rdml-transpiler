@@ -340,24 +340,26 @@ function getAllKeys(t)
 	
 	return fields;
 }
+function isNumber(str) {
+  return !isNaN(Number(str));
+}
 function formatWhere(w,t)
 {
 	function formatOne(match)
 	{
 		var str1 = match.toUpperCase();
 		var str2 = str1.substr(1,str1.length-1);
-		var str3 = '$' + str2;
-		var bindType = findFieldType(str2,t);
-		if (bindType == 's')
-		{
-			return  "' . '\\'' . " + str3 + " . '\\'' . '";
-		} 
-		else
-		{
-			return  "' . " + str3 + " . '";
-		}
+		return str2;
 	}
-	return w.replace(/[\#]{1}[a-zA-Z0-9_]+/g, formatOne);
+	w = w.replace(/'([^']*)'/g, '"$1"');  							    // replace single quotes with double quotes
+	//w = w.replace(/(?<=^|\s)([^#"'\s][^\s]*)(?=\s|$)/g, '"$1"');		// for literals wrap in double quotes
+																		// -  skip keywords (should move this back to parser?)
+	//w = w.replace(/(?<=^|\s)(?!(?:OR|AND|=|<|<=|>|>=)(?:\s|$))([^#"'\s][^\s]*)(?=\s|$)/gi, '"$1"'); 
+																		// skip numbers
+	w = w.replace(/(?<=^|\s)(?!(?:OR|AND|=|<|<=|>|>=|-?\d+(?:\.\d+)?)(?:\s|$))([^#"'\s][^\s]*)(?=\s|$)/gi, '"$1"');
+	return w.replace(/#([a-zA-Z0-9_]+)/g, '$1');						// extract and format all variable name #xyz
+	
+	// return w.replace(/[\#]{1}[a-zA-Z0-9_]+/g, formatOne); 			// extract and format all variable name #xyz
 }
 function add_files_stack(t)
 {

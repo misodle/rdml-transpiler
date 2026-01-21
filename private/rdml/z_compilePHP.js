@@ -1,4 +1,30 @@
 
+// shims for spidermonkey vs. quickjs
+
+// import * as std from 'std';
+
+globalThis.load = function(path) {
+  std.loadScript(path);
+};
+
+globalThis.readline = function() {
+  return std.in.getline();
+};
+
+globalThis.print = function(...args) {
+  std.out.puts(args.join(' ') + '\n');
+};
+
+globalThis.read = function(path) {
+  return std.loadFile(path);
+};
+
+globalThis.debug = function(...args) {
+  std.err.puts(args.join(' ') + '\n');
+};
+
+globalThis.arguments = scriptArgs.slice(1);   // sript first agrument for difference between spidermonkey and quickjs
+
 // load base ometa libraries
 load("./private/ometa/lib.js");
 load("./private/ometa/ometa-base.js");
@@ -25,7 +51,8 @@ while (std_in != null) {
 }
 
 // Create AST
-var parser = read("./private/rdml/z_parser.txt");	
+//var parser = read("./private/rdml/z_parser.txt");	
+var parser = std.loadFile('./private/rdml/z_parser.txt');
 ometa(parser);
 var tree = CalcParser.matchAll(source, 'start');
 
@@ -35,5 +62,7 @@ var compiler = read("./private/rdml/z_compiler_php.txt");
 ometa(compiler);
 var code = CalcCompiler.match(tree, 'ast');
 print(code);
+
+debug("Compiled Script was " + theScriptName);
 
  

@@ -46,7 +46,7 @@ endif
 //endselect
 //generates currently: select * from nfl_player_defense where SEASON_ID=? and POSITION_ID=? ORDER BY SEASON_ID, PLAYER_ID LIMIT ?,?
 
-//FAILS
+//FAILS (would need to revamp file logic here to account for non file with_key variables and get field names in order by key)
 //#dummy_variable := 0
 //Select Fields(*all) From_File(nfl_player_defense) with_key(#dummy_variable) limit(#start,#limit)
 //	add_entry to_list(#list1)
@@ -56,18 +56,20 @@ endif
 //Case 1 : where(#position_id = "LB")   // sb #position_id -> position_id
 //Case 2 : where(#position_id = 'LB')	// any form of LB should transform to 'LB'  (depending on settings "x" can mean column)
 //Case 3 : where(#position_id = LB)		// this form of where (not select_sql can not merge in variables, hard code only)
+//Case 4 : for file field #xxxx is DB field, for non file field we merge in field value instead of that field as a literal
 // convert #fld to fld, " to ', wrap text by 'x', numeric leave alone 
 
 
 // OK ??
-#season_id := 0
-#nfl_team_id3 := "CHI"
-Select Fields(*all) From_File(nfl_player_defense) where(position_id = "LB") with_key(#season_id #nfl_team_id3) limit(#start,#limit)
-	add_entry to_list(#list1)
-endselect
+//#season_id := 0
+//#nfl_team_id3 := "CHI"
+// this is not supported so should not work (select_Sql will support variable substitution)
+//Select Fields(*all) From_File(nfl_player_defense) where(position_id = "LB") with_key(#season_id #nfl_team_id3) limit(#start,#limit)
+//	add_entry to_list(#list1)
+//endselect
 
-// FAILS/* this is currently not working
-//Select Fields(*all) From_File(nfl_player_defense) where(position_id = 'LB') limit(#start,#limit)
+// OK 
+//Select Fields(*all) From_File(nfl_player_defense) where(#position_id = 'WR' OR #position_id = "LB" OR #position_id = CB) limit(#start,#limit)
 //	add_entry to_list(#list1)
 //endselect
 
@@ -77,6 +79,11 @@ endselect
 //	add_entry to_list(#list1)
 //endselect
 
+#season_id := 0
+#nfl_team_id3 := "CHI"
+Select Fields(*all) From_File(nfl_player_defense) where(#season_id = 0 or #position_id = 'WR' OR #position_id = "LB" OR #position_id = CB) with_key(#season_id #nfl_team_id3) limit(#start,#limit)
+	add_entry to_list(#list1)
+endselect
 
 
 

@@ -6,19 +6,19 @@ set /p DumpAST= Dump Abstract Syntax Tree (Yes/No)?
 call:toLower ProgramName
 
 @ECHO ON
-"%~dp0..\spidermonkey\js.exe" "%~dp0z_compilePHP.js" %ProgramName% < %ProgramName%.txt > %ProgramName%.php 
+"%~dp0..\quickjs\qjs.exe" --std "%~dp0z_compilePHP.js" %ProgramName% < %ProgramName%.txt > %ProgramName%.php 
 
 @ECHO OFF
 if /i (%Html%)==(y) set "Html=yes"
 
 @ECHO ON
-if /i (%Html%)==(yes) ("%~dp0..\spidermonkey\js.exe" "%~dp0z_compileHTML.js" %ProgramName% < %ProgramName%.txt > %ProgramName%.html)
+if /i (%Html%)==(yes) ("%~dp0..\quickjs\qjs.exe" --std "%~dp0z_compileHTML.js" %ProgramName% < %ProgramName%.txt > %ProgramName%.html)
 
 @ECHO OFF
 if /i (%DumpAST%)==(y) set "DumpAST=yes"
 
 @ECHO ON
-if /i (%DumpAST%)==(yes) ("%~dp0..\spidermonkey\js.exe" "%~dp0z_dumpAST.js" %ProgramName% < %ProgramName%.txt > %ProgramName%.ast)
+if /i (%DumpAST%)==(yes) ("%~dp0..\quickjs\qjs.exe" --std "%~dp0z_dumpAST.js" %ProgramName% < %ProgramName%.txt > %ProgramName%.ast)
 
 @ECHO OFF
 echo.
@@ -32,8 +32,8 @@ goto:eof
 if not defined %~1 EXIT /b
 for %%a in ("A=a" "B=b" "C=c" "D=d" "E=e" "F=f" "G=g" "H=h" "I=i"
             "J=j" "K=k" "L=l" "M=m" "N=n" "O=o" "P=p" "Q=q" "R=r"
-            "S=s" "T=t" "U=u" "V=v" "W=w" "X=x" "Y=y" "Z=z" "Ä=ä"
-            "Ö=ö" "Ü=ü") do (
+            "S=s" "T=t" "U=u" "V=v" "W=w" "X=x" "Y=y" "Z=z" "ï¿½=ï¿½"
+            "ï¿½=ï¿½" "ï¿½=ï¿½") do (
     call set %~1=%%%~1:%%~a%%
 )
 EXIT /b
