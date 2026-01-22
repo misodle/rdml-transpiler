@@ -196,7 +196,37 @@ function findFieldTypeDeprecated(f,t)
 }
 function findFieldType(f,t)
 {
-	// find string definition in local DEFINES first
+	
+	// look in FILE definitions
+	for(i=0;i<tables.length;i=i+2) 
+	{
+		var file  = tables[i];
+		var tfields = tables[i+1];
+		if (file == t)
+		{
+			for(i=0;i<tfields.length;i=i+3) 
+			{
+				var name = tfields[i];
+				var type = tfields[i+1];
+				var key  = tfields[i+2];
+				if (name == f)
+				{
+					bindType = getMysqliBindType(type);
+					found = true;
+					break;  // leave fields loop
+				}
+			}
+			break; // leave files loop
+		}
+	}
+	
+	if (found == true)
+	{
+		bindType += "T";  // indicates a table field so this should be a variable
+		return bindType;
+	}
+
+	// find string definition in local DEFINES (if not found above)
 	
 	var i = 0;
 	var bindType = ''; 
@@ -221,31 +251,12 @@ function findFieldType(f,t)
 	
 	if (found == true)
 	{
+		bindType += "L"; 		// indicates a local field so substitution variable
 		return bindType;
 	}
-	
-	// not found yet, look in FILE definitions
-	for(i=0;i<tables.length;i=i+2) 
-	{
-		var file  = tables[i];
-		var tfields = tables[i+1];
-		if (file == t)
-		{
-			for(i=0;i<tfields.length;i=i+3) 
-			{
-				var name = tfields[i];
-				var type = tfields[i+1];
-				var key  = tfields[i+2];
-				if (name == f)
-				{
-					bindType = getMysqliBindType(type);
-					break;  // leave fields loop
-				}
-			}
-			break; // leave files loop
-		}
-	}
-	
+
+	// not found so assume string and local : this is a repository field and not implemented yet
+	bindType = 'sL'; 
 	return bindType;
 }
 function getMysqliBindType(mysqlType) {
@@ -343,24 +354,86 @@ function getAllKeys(t)
 function isNumber(str) {
   return !isNaN(Number(str));
 }
+function formatWhereStub(w,t)
+{
+
+	var fullWhere = '';
+	var fullType = '';
+	var fullBind = '';
+
+	//return fullWhere;
+	return [fullWhere,fullType,fullBind];
+} 
 function formatWhere(w,t)
 {
-	function formatOne(match)
+
+	var fullWhere = '';
+	var fullType = '';
+	var fullBind = '';
+
+	function formatOne(token)
 	{
-		var str1 = match.toUpperCase();
-		var str2 = str1.substr(1,str1.length-1);
-		return str2;
+
+		if (/^[()]$/.test(token)) {								// paranthesis
+			return token;
+		
+		} else if (/^(OR|AND|=|<|<=|>|>=)$/i.test(token)) {		// operators
+			return token;
+
+		} else if (/'([^']*)'/.test(token)) {					// single quoted literal			
+			return '"' + token.slice(1,-1) + '"';
+
+		} else if (/"[^"]*"/.test(token)) {						// double quoted literal				
+			return token;
+
+		} else if (/^-?\d+(\.\d+)?$/.test(token)) {				// number literal
+			return token;
+	
+    	} else if (/#([a-zA-Z0-9_]+)/.test(token)) {			// variable
+			var field = token.slice(1).toUpperCase();
+			var bnd  = findFieldType(field,t);
+			var bindType = bnd[0];		
+			var bindContext = bnd[1];
+			if (bindContext == 'T')
+			{
+				return field;
+			}
+			if (bindContext == 'L')
+			{
+				fullType += bindType;
+				fullBind += ',$' + field;
+				return "?";
+			}	
+		} else {												// naked literals leftover
+			return '"' + token + '"';
+		}
 	}
-	w = w.replace(/'([^']*)'/g, '"$1"');  							    // replace single quotes with double quotes
+
+	// extract each token (field, paranthesis, logical operator, literal, or quoted literal)
+	fullWhere = w.replace(/"[^"]*"|'[^']*'|\(|\)|[^\s]+/g, formatOne);
+	return [fullWhere,fullType,fullBind]; 
+
+	// ****************** deprecated *****************************//
+	// extract and format all variable name #xyz
+	//return w.replace(/#[a-zA-Z0-9_]+/g, formatOne); 			    
+
+	// replace single quotes with double quotes
+	// w = w.replace(/'([^']*)'/g, '"$1"');  							    
+	
+	// literals wrap in double quotes
+	// skip keywords
+	// skip numbers
+	// w = w.replace(/(?<=^|\s)(?!(?:OR|AND|=|<|<=|>|>=|-?\d+(?:\.\d+)?)(?:\s|$))([^#"'\s][^\s]*)(?=\s|$)/gi, '"$1"');
+
 	//w = w.replace(/(?<=^|\s)([^#"'\s][^\s]*)(?=\s|$)/g, '"$1"');		// for literals wrap in double quotes
 																		// -  skip keywords (should move this back to parser?)
 	//w = w.replace(/(?<=^|\s)(?!(?:OR|AND|=|<|<=|>|>=)(?:\s|$))([^#"'\s][^\s]*)(?=\s|$)/gi, '"$1"'); 
 																		// skip numbers
-	w = w.replace(/(?<=^|\s)(?!(?:OR|AND|=|<|<=|>|>=|-?\d+(?:\.\d+)?)(?:\s|$))([^#"'\s][^\s]*)(?=\s|$)/gi, '"$1"');
-	return w.replace(/#([a-zA-Z0-9_]+)/g, '$1');						// extract and format all variable name #xyz
-	
-	// return w.replace(/[\#]{1}[a-zA-Z0-9_]+/g, formatOne); 			// extract and format all variable name #xyz
+	//return w.replace(/#([a-zA-Z0-9_]+)/g, '$1');						// extract and format all variable name #xyz
+				    
+
 }
+
 function add_files_stack(t)
 {
 	if (files_stack.indexOf(t) == -1)
@@ -417,7 +490,7 @@ function l_select(t,f,w,k,o,l)
 			field = k[i][0];
 			if (inSubr == "Y" && subroutine_id_stack.indexOf(field) == -1) subroutine_id_stack.push(field);   	
 			if (inSubr == "N" && main_body_id_stack.indexOf(field) == -1) main_body_id_stack.push(field);   	
-			type += findFieldType(field,t);
+			type += findFieldType(field,t)[0];
 			bind += ',$' + field;
 			withkey += " . ' " + field + "=? '";		
 			if (i < k.length - 1) withkey += " . ' and '";
@@ -425,11 +498,15 @@ function l_select(t,f,w,k,o,l)
 		where = " . ' where '" + withkey;
 	}
 
-	
-	w = formatWhere(w,t);
-	
 	if (w != 'N/A')
 	{
+		var fullWhere = '';
+		var fullType = '';
+		var fullBind = '';
+		[fullWhere,fullType,fullBind] = formatWhere(w,t);
+		w = fullWhere;
+		type += fullType;
+		bind += fullBind;
 		if (where == '') 
 		{
 			where += " . ' where ' . '('";
@@ -534,7 +611,7 @@ function l_fetch(t,f,w,k,s)
 			field = k[i][0];
 			if (inSubr == "Y" && subroutine_id_stack.indexOf(field) == -1) subroutine_id_stack.push(field);   	
 			if (inSubr == "N" && main_body_id_stack.indexOf(field) == -1) main_body_id_stack.push(field);   	
-			var is_string = findFieldType(field,t);
+			var is_string = findFieldType(field,t)[0];
 			if (is_string == true)
 			{
 				withkey += " . '" + field + "=' . '\\'' . $" + field + " . '\\''";
@@ -549,10 +626,14 @@ function l_fetch(t,f,w,k,s)
 		where = " . ' where '" + withkey;
 	}
 	
-	w = formatWhere(w,t);
-	
 	if (w != 'N/A')
 	{
+		//let [fullWhere,fullType,fullBind] = formatWhere(w,t);
+		//var fullWhere = '';
+		//fullWhere = formatWhere(w,t);
+		//w = fullWhere;
+		//type += fullType;
+		//bind += fullBind;
 		if (where == '') 
 		{
 			where += " . ' where ' . '('";
@@ -611,7 +692,7 @@ function l_delete(t,w,k,s)
 			field = k[i][0];
 			if (inSubr == "Y" && subroutine_id_stack.indexOf(field) == -1) subroutine_id_stack.push(field);   	
 			if (inSubr == "N" && main_body_id_stack.indexOf(field) == -1) main_body_id_stack.push(field);   	
-			var is_string = findFieldType(field,t);
+			var is_string = findFieldType(field,t)[0];
 			if (is_string == true)
 			{
 				withkey += " . '" + field + "=' . '\\'' . $" + field + " . '\\''";
@@ -626,10 +707,14 @@ function l_delete(t,w,k,s)
 		where = " . ' where '" + withkey;
 	}
 	
-	w = formatWhere(w,t);
-	
 	if (w != 'N/A')
 	{
+		//let [fullWhere,fullType,fullBind] = formatWhere(w,t);
+		//var fullWhere = '';
+		//fullWhere = formatWhere(w,t);
+		//w = fullWhere;
+		//type += fullType;
+		//bind += fullBind;
 		if (where == '') 
 		{
 			where += " . ' where ' . '('";
@@ -687,7 +772,7 @@ function l_update(t,f,k,s)
 		field = f[i];
 		if (inSubr == "Y" && subroutine_id_stack.indexOf(field) == -1) subroutine_id_stack.push(field);   	
 		if (inSubr == "N" && main_body_id_stack.indexOf(field) == -1) main_body_id_stack.push(field);
-		is_string = findFieldType(field,t);
+		is_string = findFieldType(field,t)[0];
 		if (is_string == true)
 		{
 			set += " . '" + field + "=' . '\\'' . $" + field + " . '\\''";
@@ -707,7 +792,7 @@ function l_update(t,f,k,s)
 			field = k[i][0];
 			if (inSubr == "Y" && subroutine_id_stack.indexOf(field) == -1) subroutine_id_stack.push(field);   	
 			if (inSubr == "N" && main_body_id_stack.indexOf(field) == -1) main_body_id_stack.push(field);   	
-			is_string = findFieldType(field,t);
+			is_string = findFieldType(field,t)[0];
 			if (is_string == true)
 			{
 				withkey += " . '" + field + "=' . '\\'' . $" + field + " . '\\''";
@@ -769,7 +854,7 @@ function l_insert(t,f,s)
 		field = f[i];
 		if (inSubr == "Y" && subroutine_id_stack.indexOf(field) == -1) subroutine_id_stack.push(field);   	
 		if (inSubr == "N" && main_body_id_stack.indexOf(field) == -1) main_body_id_stack.push(field);
-		is_string = findFieldType(field,t);
+		is_string = findFieldType(field,t)[0];
 		flds += field;
 		if (is_string == true)
 		{
