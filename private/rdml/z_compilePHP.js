@@ -49,6 +49,7 @@ while (std_in != null) {
 	source += std_in + "\n";
 	std_in = readline();
 }
+debug("Finished reading source file");
 
 // Create AST
 //var parser = read("./private/rdml/z_parser.txt");	
@@ -56,11 +57,18 @@ var parser = std.loadFile('./private/rdml/z_parser.txt');
 ometa(parser);
 var tree = CalcParser.matchAll(source, 'start');
 
+debug("Finished parsing and building AST");
+
 // Compile to PHP
 var theScriptName = arguments[0].toLowerCase();
 var compiler = read("./private/rdml/z_compiler_php.txt");
+
+debug("load compiler logic");
 ometa(compiler);
+debug("compiler logic loaded");
+debug("compile code vs. AST");
 var code = CalcCompiler.match(tree, 'ast');
+debug("right after creating code matching compiler to AST");
 print(code);
 
 debug("Compiled Script was " + theScriptName);
