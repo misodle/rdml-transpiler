@@ -413,25 +413,6 @@ function formatWhere(w,t)
 	fullWhere = w.replace(/"[^"]*"|'[^']*'|\(|\)|[^\s]+/g, formatOne);
 	return [fullWhere,fullType,fullBind]; 
 
-	// ****************** deprecated *****************************//
-	// extract and format all variable name #xyz
-	//return w.replace(/#[a-zA-Z0-9_]+/g, formatOne); 			    
-
-	// replace single quotes with double quotes
-	// w = w.replace(/'([^']*)'/g, '"$1"');  							    
-	
-	// literals wrap in double quotes
-	// skip keywords
-	// skip numbers
-	// w = w.replace(/(?<=^|\s)(?!(?:OR|AND|=|<|<=|>|>=|-?\d+(?:\.\d+)?)(?:\s|$))([^#"'\s][^\s]*)(?=\s|$)/gi, '"$1"');
-
-	//w = w.replace(/(?<=^|\s)([^#"'\s][^\s]*)(?=\s|$)/g, '"$1"');		// for literals wrap in double quotes
-																		// -  skip keywords (should move this back to parser?)
-	//w = w.replace(/(?<=^|\s)(?!(?:OR|AND|=|<|<=|>|>=)(?:\s|$))([^#"'\s][^\s]*)(?=\s|$)/gi, '"$1"'); 
-																		// skip numbers
-	//return w.replace(/#([a-zA-Z0-9_]+)/g, '$1');						// extract and format all variable name #xyz
-				    
-
 }
 
 function add_files_stack(t)
