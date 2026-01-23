@@ -412,7 +412,7 @@ function formatWhere(w,t)
 	}
 
 	// extract each token (field, paranthesis, logical operator, literal, or quoted literal)
-	fullWhere = w.replace(/"[^"]*"|'[^']*'|\(|\)|-?\d+(\.\d+)?|[^\s]+/g, formatOne);
+	fullWhere = w.replace(/"[^"]*"|'[^']*'|\(|\)|-?\d+(\.\d+)?|[^)\s]+/g, formatOne);
 	return [fullWhere,fullType,fullBind]; 
 
 }
@@ -427,6 +427,7 @@ function add_files_stack(t)
 		eval(get_src);
 	}
 }
+
 function l_select(t,f,w,k,o,l)
 {
 	add_files_stack(t);
@@ -555,6 +556,7 @@ function l_select(t,f,w,k,o,l)
 	myY += "} \n";
 	return myY ;
 }
+
 function l_fetch(t,f,w,k,s)
 {
 	add_files_stack(t);
@@ -564,21 +566,25 @@ function l_fetch(t,f,w,k,s)
 	var fields = '';
 	var where = '';
 	var withkey = '';
+
+	var type = '';
+	var bind = '';
 	
 	if (f == '*ALL')
 	{
 		fields = '*'
 	}
-	
-	for(i=0;i<f.length;i++) {
-		field = f[i][0];
-		fields += field;
-		if (i < f.length - 1) fields += ',';
-		if (inSubr == "Y" && subroutine_id_stack.indexOf(field) == -1) subroutine_id_stack.push(field);   	
-		if (inSubr == "N" && main_body_id_stack.indexOf(field) == -1) main_body_id_stack.push(field);   	
+	else
+	{
+		for(i=0;i<f.length;i++) {
+			field = f[i][0];
+			fields += field;
+			if (i < f.length - 1) fields += ',';
+			if (inSubr == "Y" && subroutine_id_stack.indexOf(field) == -1) subroutine_id_stack.push(field);   	
+			if (inSubr == "N" && main_body_id_stack.indexOf(field) == -1) main_body_id_stack.push(field);   	
+		}
 	}
-
-	
+		
 	var myY = "$query";
 	myY += " = ";
 	myY += "'";			
@@ -594,16 +600,9 @@ function l_fetch(t,f,w,k,s)
 			field = k[i][0];
 			if (inSubr == "Y" && subroutine_id_stack.indexOf(field) == -1) subroutine_id_stack.push(field);   	
 			if (inSubr == "N" && main_body_id_stack.indexOf(field) == -1) main_body_id_stack.push(field);   	
-			var is_string = findFieldType(field,t)[0];
-			if (is_string == true)
-			{
-				withkey += " . '" + field + "=' . '\\'' . $" + field + " . '\\''";
-			}
-			else
-			{
-				withkey += " . '" + field + "=' . $" + field + " ";
-			}
-			
+			type += findFieldType(field,t)[0];
+			bind += ',$' + field;
+			withkey += " . ' " + field + "=? '";		
 			if (i < k.length - 1) withkey += " . ' and '";
 		}
 		where = " . ' where '" + withkey;
@@ -611,12 +610,13 @@ function l_fetch(t,f,w,k,s)
 	
 	if (w != 'N/A')
 	{
-		//let [fullWhere,fullType,fullBind] = formatWhere(w,t);
-		//var fullWhere = '';
-		//fullWhere = formatWhere(w,t);
-		//w = fullWhere;
-		//type += fullType;
-		//bind += fullBind;
+		var fullWhere = '';
+		var fullType = '';
+		var fullBind = '';
+		[fullWhere,fullType,fullBind] = formatWhere(w,t);
+		w = fullWhere;
+		type += fullType;
+		bind += fullBind;
 		if (where == '') 
 		{
 			where += " . ' where ' . '('";
@@ -628,12 +628,14 @@ function l_fetch(t,f,w,k,s)
 		where += " . '" + w + "' . ')'";
 	}
 	myY += where + " . ' LIMIT 1';\n";
-	
+	if (type != '') type = " ,'" + type + "'";
 	myY += "var_dump($query);\n";
-	
-	myY += "$result = mysqli_query($conID,$query); \n"; 	
-	myY += "$IO_ROWS = mysqli_affected_rows($conID); \n";
-	myY += "$IO_ERR = mysqli_error($conID); \n"; 	 	
+	myY += "$stmt = mysqli_prepare($conID, $query); \n";
+	if (bind != '') myY += "mysqli_stmt_bind_param($stmt" + type + bind + "); \n";
+	myY += "mysqli_stmt_execute($stmt); \n";
+	myY += "$result = mysqli_stmt_get_result($stmt); \n";
+	myY += "$IO_ERR = mysqli_stmt_error($stmt); \n";
+	myY += "$IO_ROWS = mysqli_stmt_affected_rows($stmt); \n";	
 	myY += "while ($record = mysqli_fetch_array($result, MYSQLI_BOTH)) \n";
 	myY += "{ \n";
 	myY += "foreach($record as $key => $value) { \n";
