@@ -85,8 +85,14 @@ ometa CalcParser {
 	DB_FIELDS		= "FIELDS(" sp* fields:f sp* ")"															-> ['fields',f]
 					| "FIELDS(" sp* "*ALL":f sp* ")"															-> '*ALL',
 	DB_FILE			= ("FROM_FILE"|"IN_FILE"|"TO_FILE") "(" sp* name2:t sp* ")"									-> t,
-	DB_WHERE		= "WHERE(" sp* (~")" anything)*:w sp* ")"													-> w.join('')
-					| sp*																						-> 'N/A',
+
+	DB_WHERE			= "WHERE(" whereBody:w  ")"			    -> w
+						| 	   						-> { debug("dbg where2nd: "); return 'N/A' },
+	whereBody	    	= ( parenExpr | nonParenChar )+:xs      -> { debug("dbg whereBody: " + xs.join('')); return xs.join('') },
+	parenExpr			= "(" whereBody:w ")" 					-> { debug("dbg parenExpr: " + ("(" + w + ")")); return ("(" + w + ")") },
+    nonParenChar  		= nonParenCharChar+:cs                  -> { debug("dbg nonParenChar: " + cs.join('')); return cs.join('') },
+    nonParenCharChar 	= anything:c ?(c != '(' && c != ')')	-> { debug("dbg nonParenCharChar: " + c); return c },
+
 	DB_KEYS			= "WITH_KEY(" sp* fields:k sp* ")"															-> k
 					| sp*																						-> 'N/A',
 	DB_OPTIONS		= "OPTIONS(" sp* DB_OPTS:o sp* ")" 															-> o
