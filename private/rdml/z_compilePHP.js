@@ -1,6 +1,5 @@
 
 // shims for spidermonkey vs. quickjs
-
 // import * as std from 'std';
 
 globalThis.load = function(path) {
@@ -54,9 +53,10 @@ debug("Finished reading source file");
 // Create AST
 //var parser = read("./private/rdml/z_parser.txt");	
 var parser = std.loadFile('./private/rdml/z_parser.txt');
+debug("Finished loading parser code");
 ometa(parser);
+debug("ometa loaded parser code");
 var tree = CalcParser.matchAll(source, 'start');
-
 debug("Finished parsing and building AST");
 
 // Compile to PHP
