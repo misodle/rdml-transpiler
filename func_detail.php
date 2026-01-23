@@ -25,13 +25,17 @@ function _Main()
     global $START;
     global $IO_STS;
     global $IO_ERR;
+    global $IO_ROWS;
     _get_exchange();
     if ($STD_BUTTON == 'DETAIL') {
-        $query = 'select SEASON_ID,PLAYER_ID,PLAYER_NAME,NFL_TEAM_ID,NFL_TEAM_ID3,POSITION_ID from nfl_player_defense' . ' where ' . 'SEASON_ID=' . $SEASON_ID  . ' and ' . 'PLAYER_ID=' . $PLAYER_ID  . ' LIMIT 1';
+        $query = 'select SEASON_ID,PLAYER_ID,PLAYER_NAME,NFL_TEAM_ID,NFL_TEAM_ID3,POSITION_ID from nfl_player_defense' . ' where ' . ' SEASON_ID=? ' . ' and ' . ' PLAYER_ID=? ' . ' LIMIT 1';
         var_dump($query);
-        $result = mysqli_query($conID, $query);
-        $IO_ROWS = mysqli_affected_rows($conID);
-        $IO_ERR = mysqli_error($conID);
+        $stmt = mysqli_prepare($conID, $query);
+        mysqli_stmt_bind_param($stmt, 'di', $SEASON_ID, $PLAYER_ID);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        $IO_ERR = mysqli_stmt_error($stmt);
+        $IO_ROWS = mysqli_stmt_affected_rows($stmt);
         while ($record = mysqli_fetch_array($result, MYSQLI_BOTH)) {
             foreach ($record as $key => $value) {
                 $key = strtoupper($key);
@@ -45,36 +49,52 @@ function _Main()
         }
     }
     if ($STD_BUTTON == 'UPDATE') {
-        $query = 'update nfl_player_defense set ' . 'SEASON_ID=' . $SEASON_ID  . ', ' . 'PLAYER_ID=' . $PLAYER_ID  . ', ' . 'PLAYER_NAME=' . '\'' . $PLAYER_NAME . '\'' . ', ' . 'NFL_TEAM_ID=' . $NFL_TEAM_ID  . ', ' . 'NFL_TEAM_ID3=' . '\'' . $NFL_TEAM_ID3 . '\'' . ', ' . 'POSITION_ID=' . '\'' . $POSITION_ID . '\'' . ' where ' . 'SEASON_ID=' . $SEASON_ID  . ' and ' . 'PLAYER_ID=' . $PLAYER_ID  . ' LIMIT 1';
+        $query = 'update nfl_player_defense set ' . 'SEASON_ID=?' . ', ' . 'PLAYER_ID=?' . ', ' . 'PLAYER_NAME=?' . ', ' . 'NFL_TEAM_ID=?' . ', ' . 'NFL_TEAM_ID3=?' . ', ' . 'POSITION_ID=?' . ' where ' . ' SEASON_ID=? ' . ' and ' . ' PLAYER_ID=? ' . ' LIMIT 1';
         var_dump($query);
-        $result = mysqli_query($conID, $query);
-        $IO_ROWS = mysqli_affected_rows($conID);
-        $IO_ERR = mysqli_error($conID);
-        if ($result == FALSE) {
+        $stmt = mysqli_prepare($conID, $query);
+        mysqli_stmt_bind_param($stmt, 'disissdi', $SEASON_ID, $PLAYER_ID, $PLAYER_NAME, $NFL_TEAM_ID, $NFL_TEAM_ID3, $POSITION_ID, $SEASON_ID, $PLAYER_ID);
+        mysqli_stmt_execute($stmt);
+        $IO_ERR = mysqli_stmt_error($stmt);
+        $IO_ROWS = mysqli_stmt_affected_rows($stmt);
+        if ($IO_ERR !== '' or $IO_ROWS == 0 or $IO_ROWS == -1) {
             $IO_STS = 'ER';
         } else {
             $IO_STS = 'OK';
         }
     }
     if ($STD_BUTTON == 'INSERT') {
-        $query = 'insert INTO nfl_player_defense (SEASON_ID, PLAYER_ID, PLAYER_NAME, NFL_TEAM_ID, NFL_TEAM_ID3, POSITION_ID) VALUES (' . $SEASON_ID . ', ' . $PLAYER_ID . ', ' . '\'' . $PLAYER_NAME . '\'' . ', ' . $NFL_TEAM_ID . ', ' . '\'' . $NFL_TEAM_ID3 . '\'' . ', ' . '\'' . $POSITION_ID . '\'' . ')';
+        $query = 'insert INTO nfl_player_defense (SEASON_ID,PLAYER_ID,PLAYER_NAME,NFL_TEAM_ID,NFL_TEAM_ID3,POSITION_ID) VALUES (?,?,?,?,?,?)';
         var_dump($query);
-        $result = mysqli_query($conID, $query);
-        $IO_ROWS = mysqli_affected_rows($conID);
-        $IO_ERR = mysqli_error($conID);
-        if ($result == FALSE) {
-            $IO_STS = 'ER';
-        } else {
-            $IO_STS = 'OK';
+        $stmt = mysqli_prepare($conID, $query);
+        mysqli_stmt_bind_param($stmt, 'disiss', $SEASON_ID, $PLAYER_ID, $PLAYER_NAME, $NFL_TEAM_ID, $NFL_TEAM_ID3, $POSITION_ID);
+        try 
+        { 
+            mysqli_stmt_execute($stmt);
+            $IO_ERR = mysqli_stmt_error($stmt);
+            $IO_ROWS = mysqli_stmt_affected_rows($stmt);
+            if ($IO_ERR !== '' or $IO_ROWS == 0 or $IO_ROWS == -1) {
+                $IO_STS = 'ER';
+            } else {
+                $IO_STS = 'OK';
+            } 
         }
+        catch (\mysqli_sql_exception $e) 
+        { 
+            $IO_ERR = $e->getMessage();
+            $IO_ROWS = 0; 
+        }
+
+
     }
     if ($STD_BUTTON == 'DELETE') {
-        $query = 'delete  from nfl_player_defense' . ' where ' . 'SEASON_ID=' . $SEASON_ID  . ' and ' . 'PLAYER_ID=' . $PLAYER_ID  . ' LIMIT 1';
+        $query = 'delete  from nfl_player_defense' . ' where ' . ' SEASON_ID=? ' . ' and ' . ' PLAYER_ID=? ' . ' LIMIT 1';
         var_dump($query);
-        $result = mysqli_query($conID, $query);
-        $IO_ROWS = mysqli_affected_rows($conID);
-        $IO_ERR = mysqli_error($conID);
-        if ($result == FALSE) {
+        $stmt = mysqli_prepare($conID, $query);
+        mysqli_stmt_bind_param($stmt, 'di', $SEASON_ID, $PLAYER_ID);
+        mysqli_stmt_execute($stmt);
+        $IO_ERR = mysqli_stmt_error($stmt);
+        $IO_ROWS = mysqli_stmt_affected_rows($stmt);
+        if ($IO_ERR !== '' or $IO_ROWS == 0 or $IO_ROWS == -1) {
             $IO_STS = 'ER';
         } else {
             $IO_STS = 'OK';
@@ -101,6 +121,7 @@ function _Get_Post()
     global $STD_BUTTON;
     global $IO_STS;
     global $IO_ERR;
+    global $IO_ROWS;
     global $SEASON_ID;
     global $PLAYER_ID;
     global $PLAYER_NAME;
@@ -111,6 +132,7 @@ function _Get_Post()
     $STD_BUTTON = '';
     $IO_STS = '';
     $IO_ERR = '';
+    $IO_ROWS = '';
     $SEASON_ID = '';
     $PLAYER_ID = '';
     $PLAYER_NAME = '';

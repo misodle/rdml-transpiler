@@ -1,6 +1,7 @@
+
 Def_List Name(#list1) Fields((#season_id *out)(#player_id *out) (#player_name *out) (#nfl_team_id *out)(#nfl_team_id3 *out)(#position_id *out)) Counter(#LISTCOUNT1) 
 
-#limit := 20
+#limit := 10
 
 if cond(#std_button = 'DETAIL')
 	exchange fields(#start #std_button #season_id #player_id)
@@ -29,9 +30,9 @@ if cond(#start <= 0)
 endif
 
 // OK
-//Select Fields(*all) From_File(nfl_player_defense) limit(#start,#limit)
-//	add_entry to_list(#list1)
-//endselect
+Select Fields(*all) From_File(nfl_player_defense) limit(#start,#limit)
+	add_entry to_list(#list1)
+endselect
 
 // OK
 //Select Fields(*all) From_File(nfl_player_defense) limit(#limit)
@@ -79,13 +80,42 @@ endif
 //	add_entry to_list(#list1)
 //endselect
 
-#season_id := 0
-#nfl_team_id3 := "CHI"
-Select Fields(*all) From_File(nfl_player_defense) where(#season_id = 0 or #position_id = 'WR' OR #position_id = "LB" OR #position_id = CB) with_key(#season_id #nfl_team_id3) limit(#start,#limit)
-	add_entry to_list(#list1)
-endselect
+// OK
+//#season_id := 0
+//#nfl_team_id3 := "CHI"
+//Select Fields(*all) From_File(nfl_player_defense) where(#season_id = 0 or #position_id = 'WR' OR #position_id = "LB" OR #position_id = CB) with_key(#season_id #nfl_team_id3) limit(#start,#limit)
+//	add_entry to_list(#list1)
+//endselect
+
+// this is supported, that is live input field in the where clause in LANSA, so this also needs a bind
+// This is OK -try some variations with more complex logic, flip around the fields, use paranthesis and logical operators
+//#season_id := 0
+//#nfl_team_id3 := "CHI"
+
+//#player_id_input := 1654
+//Select Fields(*all) From_File(nfl_player_defense) where(#player_id = #player_id_input) with_key(#season_id #nfl_team_id3) limit(#start,#limit)
+//	add_entry to_list(#list1)
+//endselect
+
+//Define Field(#input1) Type(*DEC) 
+//#input1 := 1444
+//Select Fields(*all) From_File(nfl_player_defense) where( #player_id = 1654 or #player_id = #input1 OR #nfl_team_id3 = CHI and #position_id = LB ) limit(#start,#limit)
+//	add_entry to_list(#list1)
+//endselect
+
+// OK
+//#input1 := 1444
+//Select Fields(*all) From_File(nfl_player_defense) where(#player_id = #player_id_input) limit(#start,#limit)
+//Select Fields(*all) From_File(nfl_player_defense) where( ( #player_id = 1654 or #player_id = #input1 ) OR ( #nfl_team_id3 = CHI and #position_id = LB ) ) limit(#start,#limit)
+//Select Fields(*all) From_File(nfl_player_defense) where((#player_id = 1654 or #player_id = #input1) OR (#nfl_team_id3 = CHI and #position_id = LB)) limit(#start,#limit)
+//Select Fields(*all) From_File(nfl_player_defense) WHERE( (#player_id = 16.54) ) limit(#start,#limit)
+//	add_entry to_list(#list1)
+//endselect
+
+//#input1 := 1444
+//Fetch Fields(*all) From_File(nfl_player_defense) where((#player_id = 1654) or (#player_id = #input1) OR ((#nfl_team_id3 = CHI) OR (#position_id = "LB")))
+//add_entry to_list(#list1)
 
 
 
-		
 Request Fields((#season_id *hide) (#player_id *hide) (#std_button *hide) (#start *hide) #list1 )  

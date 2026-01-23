@@ -1,0 +1,9 @@
+ometa CalcParser {
+    start = anything*:chars -> chars.join('')
+}
+ometa CalcParser2 {
+    whereBody = whereItem*:xs               -> xs.join(''),
+    whereItem = parenExpr | nonParenChar,
+    parenExpr = "(" whereBody:w ")"         -> "(" + w + ")",
+    nonParenChar = ~"(" ~")" anything:c     -> c
+}  

@@ -1,0 +1,300 @@
+
+ometa CalcParser {
+
+	us				= '_',												// underscore
+	dp				= '.',												// decimal point
+	lp				= '(',												// left paren
+	rp				= ')',												// right paren
+	sp				= ' ' | '\t', 										// white space
+	q1				= '\'',												// single quote
+	q2				= '"',												// double quote
+	newline			= '\n' | '\r' | '\n' '\r' | '\r' '\n',  			// newlines
+
+	start			= line*:x                                    		-> [['start']].concat(x).concat([['end']]),
+  
+	line			= sp* comment:x sp*									-> ['stmt',['comment',x]]
+					| ~newline sp* stmtx:x sp* newline          		-> x
+					| ~newline sp* stmtx:x sp* (~anything)          	-> x                   // last line no CRLF
+					| ~newline sp* newline                       		-> ['noop']
+					| newline                                    		-> ['noop']
+					| error:x											-> x,
+		   
+	error			= ERROR:x                               			-> ['stmt',['error', x]],
+	ERROR    		= (~newline char)+:x                    			-> x.join(''),
+  
+	comment			= fromTo('/*', '*/'):x 								-> x
+					| fromTo('//', '\n'):x								-> x,
+				
+	fromTo 	:x :y 	= seq(x) (~seq(y) char)*:z seq(y)         			-> z.join(''),
+  
+	tag  	:t		= ( letter | us )+:x ? noCaseCompare(t,x),
+	
+	stmtx  			= stmt:x											-> (x)
+					| stmt2:x											-> (x)
+					| stmt3:x											-> (x),
+  
+	stmt     		= ASSIGN:x                              			-> ['stmt', x]
+					| BEGIN_LOOP:x                          			-> ['stmt', x] 
+					| END_LOOP:x                            			-> ['stmt', x] 				
+					| CHANGE:x                              			-> ['stmt', x]
+					| IF:x                                  			-> ['stmt', x]
+					| ELSE:x                                  			-> ['stmt', x]
+					| ENDIF:x                               			-> ['stmt', x]
+					| DOWHILE:x											-> ['stmt', x]
+					| ENDWHILE:x                               			-> ['stmt', x]
+					| DOUNTIL:x                               			-> ['stmt', x]
+					| ENDUNTIL:x                               			-> ['stmt', x]
+					| REQUEST:x                               			-> ['stmt', x]
+					| SUBROUTINE:x										-> ['stmt', x]
+					| ENDROUTINE:x										-> ['stmt', x]
+					| EXECUTE:x											-> ['stmt', x]
+					| PRINT:x                               			-> ['stmt', x]
+					| CALL:x											-> ['stmt', x]
+					| EXCHANGE:x										-> ['stmt', x]
+					| LEAVE:x											-> ['stmt', x]
+					| CONTINUE:x										-> ['stmt', x],
+					
+	stmt2     		= DEF_LIST:x										-> ['stmt', x]
+					| ADD_ENTRY:x										-> ['stmt', x]
+					| CLR_LIST:x										-> ['stmt', x]
+					| DLT_LIST:x										-> ['stmt', x]
+					| INZ_LIST:x										-> ['stmt', x]
+					| SELECTLIST:x										-> ['stmt', x]
+					| ENDSELECT:x										-> ['stmt', x]
+					| UPD_ENTRY:x										-> ['stmt', x]
+					| GET_ENTRY:x										-> ['stmt', x]
+					| DLT_ENTRY:x										-> ['stmt', x]
+					| LOC_ENTRY:x										-> ['stmt', x]
+					| SORT_LIST:x										-> ['stmt', x],
+					
+	stmt3     		= SELECT:x											-> ['stmt', x]
+					| FETCH:x											-> ['stmt', x]
+					| UPDATE:x											-> ['stmt', x]
+					| DELETE:x											-> ['stmt', x]
+					| INSERT:x											-> ['stmt', x]
+					| DEFINE:x											-> ['stmt', x],
+	
+	DEFINE			= "DEFINE" sp+ "FIELD(" sp* field:f sp* ")" sp+ "TYPE(" sp* ("*CHAR"|"*DEC"):t sp* ")"		-> ['define',f,t],
+	SELECT          = "SELECT" sp+ DB_FIELDS:f sp+ DB_FILE:t sp* DB_WHERE:w sp* DB_KEYS:k sp* DB_OPTIONS:o sp* LIMIT:l			
+																													-> ['select',t,f,w,k,o,l],
+	FETCH           = "FETCH"  sp+ DB_FIELDS:f sp+ DB_FILE:t sp* DB_WHERE:w sp* DB_KEYS:k sp* DB_STATUS:s			-> ['fetch',t,f,w,k,s],
+	UPDATE			= "UPDATE" sp+ DB_FIELDS:f sp+ DB_FILE:t sp+ "WITH_KEY(" sp* fields:k sp* ")" sp* DB_STATUS:s	-> ['update',t,f,k,s],
+	DELETE			= "DELETE" 				   sp+ DB_FILE:t sp* DB_WHERE:w sp* DB_KEYS:k sp* DB_STATUS:s			-> ['delete',t,w,k,s],
+	INSERT			= "INSERT" sp+ DB_FIELDS:f sp+ DB_FILE:t							  sp* DB_STATUS:s			-> ['insert',t,f,s],
+	
+	DB_FIELDS		= "FIELDS(" sp* fields:f sp* ")"															-> ['fields',f]
+					| "FIELDS(" sp* "*ALL":f sp* ")"															-> '*ALL',
+	DB_FILE			= ("FROM_FILE"|"IN_FILE"|"TO_FILE") "(" sp* name2:t sp* ")"									-> t,
+
+	DB_WHERE		= "WHERE(" sp* whereBody:w sp* ")"															-> w
+					| sp*																						-> 'N/A',
+	whereBody	    = ( parenExpr | nonParenChar )+:xs       													-> xs.join(''),
+	parenExpr		= "(" whereBody:w ")" 						       											-> ("(" + w + ")"),
+    nonParenChar    = nonParenCharChr+:cs                   													-> cs.join(''),
+    nonParenCharChr = anything:c ?(c != '(' && c != ')')  														-> c,
+
+	DB_KEYS			= "WITH_KEY(" sp* fields:k sp* ")"															-> k
+					| sp*																						-> 'N/A',
+	DB_OPTIONS		= "OPTIONS(" sp* DB_OPTS:o sp* ")" 															-> o
+					| sp*																						-> 'N/A',
+	DB_OPTS			= DB_OPT:x sp+ DB_OPTS:y									          			       		-> [x].concat(y)
+					| DB_OPT:x                                  												-> [x], 				
+	DB_OPT			= ("*STARTKEY"|"*ENDWHERE"|"*BACKWARDS"):o													-> o,	
+	LIMIT			= "LIMIT(" sp* primExpr:s sp* "," sp* primExpr:l ")" 										-> [s,l]
+					| "LIMIT(" sp* primExpr:l sp* ")" 															-> ['N/A',l]
+					| sp*																						-> ['N/A','N/A'],
+
+	DB_STATUS		= "IO_STATUS(" sp* field:s sp* ")"															-> s
+					| "IO_STATUS(" sp* "*STATUS":s sp* ")"														-> s
+					| sp*																						-> 'N/A',
+	
+	LEAVE			= "LEAVE" sp+ "IF(" sp* cond:x sp* ")"														-> ['leave',x]
+					| "LEAVE"																					-> ['leave','N/A'],
+	CONTINUE		= "CONTINUE" sp+ "IF(" sp* cond:x sp* ")"													-> ['continue',x]
+					| "CONTINUE"																				-> ['continue','N/A'],
+	EXCHANGE		= "EXCHANGE" sp+ "FIELDS(" sp* fields:f sp* ")" sp*											-> ['exchange',['fields',f]],
+	CALL			= "CALL" sp+ CALLP:p sp* CALLF:f sp*														-> ['call',f],
+	CALLP			= "PROCESS(" sp* "*DIRECT":p sp* ")"														-> p
+					| sp*																						-> '*DIRECT',
+	CALLF			= "FUNCTION(" sp* name:f sp* ")" sp*														-> f,
+	
+	SORT_LIST      	= "SORT_LIST" sp+ "NAMED(" sp* "#" name:x sp* ")" sp+ "BY_FIELDS(" sp* fields2:f sp* ")"  	-> ['sort_list',x,['fields',f]],
+	
+	LOC_ENTRY		= "LOC_ENTRY" sp+ "IN_LIST(" sp* "#" name:x sp* ")" sp+ "WHERE(" sp* cond:c sp* ")" sp* RET_NUMBER:n sp* RET_STATUS:s sp* RET_ENTRY:r sp*
+																												-> ['loc_entry', x, c, n, s, r],
+	RET_NUMBER		= "RET_NUMBER(" sp* (field|"*NONE"):n sp* ")" sp*											-> n
+					| sp*																						-> '*NONE',
+	RET_STATUS		= "RET_STATUS(" sp* (field|"*STATUS"):s sp* ")" sp*											-> s
+					| sp*																						-> '*STATUS',
+	RET_ENTRY		= "RET_ENTRY(" sp* ("*YES"|"*NO"):r sp* ")" sp*												-> r
+					| sp*																						-> '*YES',
+	
+	GET_ENTRY		= "GET_ENTRY" sp+ "NUMBER(" sp* (field|num):n sp* ")" sp* "FROM_LIST(" sp* "#" name:x sp* ")" sp* "RET_STATUS(" sp* field:f sp* ")" sp* 								
+																												-> ['get_entry', x , n, f]
+					| "GET_ENTRY" sp+ "NUMBER(" sp* (field|num):n sp* ")" sp* "FROM_LIST(" sp* "#" name:x sp* ")" sp* 
+																												-> ['get_entry', x , n],
+					
+	DLT_ENTRY		= "DLT_ENTRY" sp+ "NUMBER(" sp* (field|num):n sp* ")" sp* "FROM_LIST(" sp* "#" name:x sp* ")" sp* 			
+																												-> ['dlt_entry', x , n]
+					| "DLT_ENTRY" sp+ "FROM_LIST(" sp* "#" name:x sp* ")" sp* 									-> ['dlt_entry', x ],
+	
+	UPD_ENTRY		= "UPD_ENTRY" sp+ "IN_LIST(" sp* "#" name:x sp* ")" 							 			-> ['upd_entry', x],
+	ENDSELECT       = "ENDSELECT"																				-> ['endselect'],
+	SELECTLIST		= "SELECTLIST" sp+ "NAMED(" sp* "#" name:x sp* ")" sp+ "WHERE(" sp* cond:c sp* ")" 			-> ['selectlist', x , c]
+					| "SELECTLIST" sp+ "NAMED(" sp* "#" name:x sp* ")" 											-> ['selectlist', x ],
+	
+	INZ_LIST		= "INZ_LIST" sp+ "NAMED(" sp* "#" name:x sp* ")" sp+ "NUM_ENTRYS(" sp* (field|num):e sp* ")" 	-> ['inz_list', x , e],
+	
+	DEF_LIST		= "DEF_LIST" sp+ "NAME(" sp* "#" name:x sp* ")" sp+ "FIELDS(" sp* fields2:f sp* ")" sp+ "COUNTER(" sp* field:c sp* ")"
+																												-> ['def_list', x , ['fields',f], ['counter',c]]
+					| "DEF_LIST" sp+ "NAME(" sp* "#" name:x sp* ")" sp+ "FIELDS(" sp* fields2:f sp* ")"			-> ['def_list', x , ['fields',f], ['counter',['id','N/A']]],
+					
+	ADD_ENTRY		= "ADD_ENTRY" sp+ "TO_LIST(" sp* "#" name:x sp* ")"											-> ['add_entry', x],
+	
+	CLR_LIST		= "CLR_LIST" sp+ "NAMED(" sp* "#" name:x sp* ")"											-> ['clr_list', x],
+	
+	DLT_LIST		= "DLT_LIST" sp+ "NAMED(" sp* "#" name:x sp* ")"											-> ['clr_list', x],
+	
+	SUBROUTINE		= "SUBROUTINE" sp+ "NAME(" sp* name:x sp* ")" sp+ "PARMS(" sp* fields:f sp* ")"				-> ['subroutine', x ,['fields',f]]
+					| "SUBROUTINE" sp+ "NAME" lp sp* name:x sp* rp 												-> ['subroutine', x ],
+
+	ENDROUTINE    	= "ENDROUTINE"																				-> ['endroutine'],
+  
+	EXECUTE			= "EXECUTE" sp+ "SUBROUTINE(" sp* name:x sp* ")" sp+ "WITH_PARMS(" sp* fields:f sp* ")"		-> ['execute', x ,['fields',f]]
+					| "EXECUTE" sp+ "SUBROUTINE(" sp* name:x sp* ")" 											-> ['execute', x ],
+	
+	DOWHILE			= "DOWHILE" sp+ "COND(" sp* cond:x sp* ")" 				-> ['dowhile',x]
+					| "DOWHILE" sp+ "(" sp* cond:x sp* ")" 					-> ['dowhile',x],
+
+	ENDWHILE		= "ENDWHILE"											-> ['endwhile'],
+
+	DOUNTIL			= "DOUNTIL" sp+ "COND(" sp* cond:x sp* ")" 				-> ['dountil',x]
+					| "DOUNTIL" sp+ "(" sp* cond:x sp* ")" 					-> ['dountil',x],
+
+	ENDUNTIL		= "ENDUNTIL"  											-> ['enduntil'],
+  
+	ASSIGN        	= id:x sp* ":=" sp* addExpr:y  sp*          			-> ['assign', x, y],
+	
+	PRINT         	= tPRINT "(" sp* id:x  sp* ")"         		    		-> ['print_id', x]
+					| tPRINT "(" sp* literal1:x sp* ")"    					-> ['print_id', x]
+					| tPRINT "(" sp* literal2:x sp* ")"    					-> ['print_id', x],
+	tPRINT			= tag('PRINT'):x,			
+		
+	IF   			= "IF" sp+ "COND(" sp* cond:x sp* ")" 					-> ['if', x]
+					| "IF" sp+ "(" sp* cond:x sp* ")"       				-> ['if', x],
+	ELSE		    = "ELSE"             									-> ['else'],
+	ENDIF		    = "ENDIF"             									-> ['endif'],
+  
+	cond			= orExpr,
+	orExpr  		= orExpr:x sp* ("OR"|"*OR") sp* andExpr:y      			-> ['or', x, y]
+					| andExpr,			
+	andExpr  		= andExpr:x sp* ("AND"|"*AND") sp* compExpr:y  			-> ['and', x, y]
+					| compExpr,
+	compExpr    	= addExpr:x sp* logic_op:o sp* addExpr:y				-> ['comp',x,o,y],			
+	logic_op 		= ("=" | "*EQ"):x                        				-> ['logic_op', '==']
+					| ("*LE" | "<="):x                         				-> ['logic_op', '<=']
+					| ("*GE" | ">="):x                         				-> ['logic_op', '>=']
+					| ("*NE" | "^="):x		                   				-> ['logic_op', '!=']
+					| ("*LT" | "<"):x                         				-> ['logic_op', '<']
+					| ("*GT" | ">"):x                          				-> ['logic_op', '>'],
+	addExpr  		= addExpr:x sp* '+' sp* mulExpr:y           			-> ['add', x, y]
+					| addExpr:x sp* '-' sp* mulExpr:y           			-> ['sub', x, y]
+					| mulExpr,
+	mulExpr  		= mulExpr:x sp* '*' sp* primExpr:y          			-> ['mul', x, y]
+					| mulExpr:x sp* '/' sp* primExpr:y          			-> ['div', x, y]
+					| primExpr,
+	primExpr 		= '(' sp* addExpr:x sp* ')'	                 			-> x
+					| '(' sp* cond:x sp* ')'								-> x
+					| (num| id | lit1 | lit2 | lit3n | lit3a):x	           	-> x,
+
+	num				= sp* "-" digit+:i dp digit+:f sp*						-> ['num', '-' + i.join('') + '.' + f.join('')]
+					| sp* digit+:i dp digit+:f sp*							-> ['num', i.join('') + '.' + f.join('')]
+					| sp* "-" digit+:d sp*									-> ['num', '-' + d.join('')]
+					| sp* digit+:d sp*                          			-> ['num', d.join('')],
+					
+	id2       		= "(" sp* "#" letter+:x (letter|digit|us)*:y attrs+:z sp* ")"	
+																			-> ['id', strToUpper(x.join('') + y.join('')) , ['attr'].concat(z) ],
+																			
+	id				= "#" letter+:x (letter|digit|us)*:y           			-> ['id', strToUpper(x.join('') + y.join('')) ],
+						
+	attrs			= attr:x sp+ attrs:y									-> [x].concat(y)
+					| attr:x												-> [x],
+					
+	attr			= "*IN":x												-> x
+					| "*OUT":x												-> x
+					| "*HIDE":x												-> x
+					| "*ND":x												-> x
+					| "*LC":x												-> x
+					| "*NOID":x												-> x
+					| "*ASCEND":x											-> x
+					| "*DESCEND":x											-> x,
+					
+	name			= letter+:x (letter|digit|us)*:y						-> ['name', strToUpper(x.join('') + y.join('')) ],
+	name2			= letter+:x (letter|digit|us)*:y						-> ['name', x.join('') + y.join('') ],
+	lit1			= q1 (~q1 char | ~q1 sp)*:x q1          				-> ['lit1', "'" + x.join('') + "'"],
+	lit2			= q2 (~q2 char | ~q2 sp)*:x q2          				-> ['lit2', '"' + x.join('') + '"'],
+	literal1      	=  q1 (~")" ~q1 char | ~")" ~q1 sp)*:x q1				-> ['lit1', "'" + x.join('') + "'"],
+	literal2      	=  q2 (~")" ~q2 char | ~")" ~q2 sp)*:x q2 				-> ['lit2', '"' + x.join('') + '"'],
+	lit3n	     	=  sysvarn									  			-> ['lit1', 0],
+	lit3a       	=  sysvara 					  							-> ['lit1', '" "'],
+	
+	sysvarn			= ("*ZEROES"|"*ZEROS"|"*ZERO"),
+	sysvara			= ("*BLANKS"|"*BLANK"|"*NULL"),
+   				
+	CHANGE       	= "CHANGE" sp+ 
+					"FIELD(" sp* fields:f sp* ")" sp+ 
+					"TO(" sp* changeto:t sp* ")"           					-> ['change',['fields',f],['to',t]],
+	
+	REQUEST      	= "REQUEST" sp+ "FIELDS(" sp* fields2:f sp* ")"  		-> ['request',['fields',f]],
+			
+	fields        	= id:x sp+ fields:y          			           		-> [x].concat(y)
+					| id:x                                  				-> [x], 
+	
+	fields2			= id:x sp+ fields2:y									-> [x].concat(y)
+					| id2:x sp+ id:z sp+ fields2:y							-> [x].concat([z]).concat(y)
+					| id2:x sp* id2:z (sp+|~~"(") fields2:y					-> [x].concat([z]).concat(y)
+					| id2:x sp+ id:z 										-> [x].concat([z])
+					| id2:x sp* id2:z 										-> [x].concat([z])
+					| id2:x													-> [x]
+					| id:x													-> [x],
+					
+	field			= id:x													-> x,
+
+						
+	changeto		= ( addExpr | id | lit1 | lit2 | lit3a | lit3n ),
+					
+	BEGIN_LOOP		= "BEGIN_LOOP" BL_USING:u  BL_FROM:f  BL_TO:t  BL_STEP:s 			-> ['begin_loop',u,f,t,s],
+	BL_USING     	= sp+ "USING(" sp* addExpr:u  sp* ")"      							-> u
+					| sp*									  							-> ['*internal'],
+	BL_FROM			= sp+ "FROM(" sp* addExpr:f  sp* ")"       							-> f
+					| sp*																-> ['num','1'],
+	BL_TO        	= sp+ "TO(" sp* addExpr:t  sp* ")"         							-> t
+					| sp*																-> ['num','9999999'],
+	BL_STEP      	= sp+ "STEP(" sp* addExpr:s  sp* ")"          						-> s
+					| sp*																-> ['num','1'],
+	END_LOOP      	= "END_LOOP"                              							-> ['end_loop'],
+  
+	dummy			= id:x
+}
+
+function noCaseCompare(x,y)
+{
+	var x1 = '';
+	for (var i=0; i<x.length; i++) {
+		x1 += x[i];
+	}
+	var y1 = '';
+	for (var i=0; i<y.length; i++) {
+		y1 += y[i];
+	}
+	return (x1.toUpperCase() == y1.toUpperCase());
+}
+function strToUpper(x)
+{
+	var x1 = '';
+	for (var i=0; i<x.length; i++) {
+		x1 += x[i];
+	}
+	return x1.toUpperCase();
+}
+

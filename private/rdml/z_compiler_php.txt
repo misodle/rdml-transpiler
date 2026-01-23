@@ -663,6 +663,9 @@ function l_delete(t,w,k,s)
 	var where = '';
 	var withkey = '';
 	
+	var type = '';
+	var bind = '';
+
 	var myY = "$query";
 	myY += " = ";
 	myY += "'";			
@@ -677,16 +680,9 @@ function l_delete(t,w,k,s)
 			field = k[i][0];
 			if (inSubr == "Y" && subroutine_id_stack.indexOf(field) == -1) subroutine_id_stack.push(field);   	
 			if (inSubr == "N" && main_body_id_stack.indexOf(field) == -1) main_body_id_stack.push(field);   	
-			var is_string = findFieldType(field,t)[0];
-			if (is_string == true)
-			{
-				withkey += " . '" + field + "=' . '\\'' . $" + field + " . '\\''";
-			}
-			else
-			{
-				withkey += " . '" + field + "=' . $" + field + " ";
-			}
-			
+			type += findFieldType(field,t)[0];
+			bind += ',$' + field;
+			withkey += " . ' " + field + "=? '";		
 			if (i < k.length - 1) withkey += " . ' and '";
 		}
 		where = " . ' where '" + withkey;
@@ -694,12 +690,13 @@ function l_delete(t,w,k,s)
 	
 	if (w != 'N/A')
 	{
-		//let [fullWhere,fullType,fullBind] = formatWhere(w,t);
-		//var fullWhere = '';
-		//fullWhere = formatWhere(w,t);
-		//w = fullWhere;
-		//type += fullType;
-		//bind += fullBind;
+		var fullWhere = '';
+		var fullType = '';
+		var fullBind = '';
+		[fullWhere,fullType,fullBind] = formatWhere(w,t);
+		w = fullWhere;
+		type += fullType;
+		bind += fullBind;
 		if (where == '') 
 		{
 			where += " . ' where ' . '('";
@@ -711,13 +708,19 @@ function l_delete(t,w,k,s)
 		where += " . '" + w + "' . ')'";
 	}
 	myY += where + " . ' LIMIT 1';\n";
+
+	if (type != '') type = " ,'" + type + "'";
 	
 	myY += "var_dump($query);\n";
 	
-	myY += "$result = mysqli_query($conID,$query); \n"; 			
-	myY += "$IO_ROWS = mysqli_affected_rows($conID); \n"; 	
-	myY += "$IO_ERR = mysqli_error($conID); \n"; 	
-	myY += "if ($result == FALSE) \n";
+	myY += "$stmt = mysqli_prepare($conID, $query); \n";
+	if (bind != '') myY += "mysqli_stmt_bind_param($stmt" + type + bind + "); \n";
+	myY += "mysqli_stmt_execute($stmt); \n";
+	
+	myY += "$IO_ERR = mysqli_stmt_error($stmt); \n";
+	myY += "$IO_ROWS = mysqli_stmt_affected_rows($stmt); \n";	
+ 	
+	myY += "if ($IO_ERR !== '' OR $IO_ROWS == 0 OR $IO_ROWS == -1) \n";
 	myY += "{ $IO_STS = 'ER'; } \n";
 	myY += "else \n";
 	myY += "{ $IO_STS = 'OK'; } \n";
@@ -728,6 +731,7 @@ function l_delete(t,w,k,s)
 	}
 	return myY ;
 }
+
 
 function l_update(t,f,k,s)
 {
@@ -740,6 +744,9 @@ function l_update(t,f,k,s)
 	var where = '';
 	var withkey = '';
 	var is_string = '';
+
+	var type = '';
+	var bind = '';
 
 	var myY = "$query";
 	myY += " = ";
@@ -757,15 +764,9 @@ function l_update(t,f,k,s)
 		field = f[i];
 		if (inSubr == "Y" && subroutine_id_stack.indexOf(field) == -1) subroutine_id_stack.push(field);   	
 		if (inSubr == "N" && main_body_id_stack.indexOf(field) == -1) main_body_id_stack.push(field);
-		is_string = findFieldType(field,t)[0];
-		if (is_string == true)
-		{
-			set += " . '" + field + "=' . '\\'' . $" + field + " . '\\''";
-		}
-		else
-		{
-			set += " . '" + field + "=' . $" + field + " ";
-		}
+		type += findFieldType(field,t)[0];
+		bind += ',$' + field;
+		set += " . '" + field + "=?'";
 		if (i < f.length - 1) set += " . ', '";
 	}
 	
@@ -777,16 +778,9 @@ function l_update(t,f,k,s)
 			field = k[i][0];
 			if (inSubr == "Y" && subroutine_id_stack.indexOf(field) == -1) subroutine_id_stack.push(field);   	
 			if (inSubr == "N" && main_body_id_stack.indexOf(field) == -1) main_body_id_stack.push(field);   	
-			is_string = findFieldType(field,t)[0];
-			if (is_string == true)
-			{
-				withkey += " . '" + field + "=' . '\\'' . $" + field + " . '\\''";
-			}
-			else
-			{
-				withkey += " . '" + field + "=' . $" + field + " ";
-			}
-			
+			type += findFieldType(field,t)[0];
+			bind += ',$' + field;
+			withkey += " . ' " + field + "=? '";		
 			if (i < k.length - 1) withkey += " . ' and '";
 		}
 		where = " . ' where '" + withkey;
@@ -794,12 +788,17 @@ function l_update(t,f,k,s)
 	
 	myY += where + " . ' LIMIT 1';\n";
 	
+	if (type != '') type = " ,'" + type + "'";
+
 	myY += "var_dump($query);\n";
-	
-	myY += "$result = mysqli_query($conID,$query); \n"; 			
-	myY += "$IO_ROWS = mysqli_affected_rows($conID); \n"; 
-	myY += "$IO_ERR = mysqli_error($conID); \n"; 	
-	myY += "if ($result == FALSE) \n";
+
+	myY += "$stmt = mysqli_prepare($conID, $query); \n";
+	if (bind != '') myY += "mysqli_stmt_bind_param($stmt" + type + bind + "); \n";
+	myY += "mysqli_stmt_execute($stmt); \n";
+	myY += "$IO_ERR = mysqli_stmt_error($stmt); \n";
+	myY += "$IO_ROWS = mysqli_stmt_affected_rows($stmt); \n";	
+ 	
+	myY += "if ($IO_ERR !== '' OR $IO_ROWS == 0 OR $IO_ROWS == -1) \n";
 	myY += "{ $IO_STS = 'ER'; } \n";
 	myY += "else \n";
 	myY += "{ $IO_STS = 'OK'; } \n";
@@ -821,11 +820,12 @@ function l_insert(t,f,s)
 	add_files_stack(t);
 
 	var i = 0;
-	var fields = '';
 	var field = '';
 	var flds = '';
 	var vals = ''; 
-	var is_string = '';
+
+	var type = '';
+	var bind = '';
 
 	var myY = "$query";
 	myY += " = ";
@@ -833,34 +833,36 @@ function l_insert(t,f,s)
 	myY += "insert INTO ";
 	myY += t;
 		
-	var f = getAllFields(t);
+	if (f == '*ALL')
+	{
+	    f = getAllFields(t);
+	}
 
 	for(i=0;i<f.length;i++) {
 		field = f[i];
 		if (inSubr == "Y" && subroutine_id_stack.indexOf(field) == -1) subroutine_id_stack.push(field);   	
 		if (inSubr == "N" && main_body_id_stack.indexOf(field) == -1) main_body_id_stack.push(field);
-		is_string = findFieldType(field,t)[0];
+		type += findFieldType(field,t)[0];
+		bind += ',$' + field;
 		flds += field;
-		if (is_string == true)
-		{
-			vals += ". '\\'' . $" + field + " . '\\''";
-		}
-		else
-		{
-			vals += ". $" + field;
-		}
-		if (i < f.length - 1) flds += ", ";
-		if (i < f.length - 1) vals += " . ', '";
+		vals += "?"; 
+		if (i < f.length - 1) flds += ",";
+		if (i < f.length - 1) vals += ",";
 	}
 	
-	myY += " (" + flds + ") VALUES ('" + vals + " . ')'; \n";
+	myY += " (" + flds + ") VALUES (" + vals + ")'" +"; \n";
+	
+	if (type != '') type = " ,'" + type + "'";
 	
 	myY += "var_dump($query);\n";
 	
-	myY += "$result = mysqli_query($conID,$query); \n"; 			
-	myY += "$IO_ROWS = mysqli_affected_rows($conID); \n"; 
-	myY += "$IO_ERR = mysqli_error($conID); \n"; 	
-	myY += "if ($result == FALSE) \n";
+	myY += "$stmt = mysqli_prepare($conID, $query); \n";
+	if (bind != '') myY += "mysqli_stmt_bind_param($stmt" + type + bind + "); \n";
+	myY += "mysqli_stmt_execute($stmt); \n";
+	myY += "$IO_ERR = mysqli_stmt_error($stmt); \n";
+	myY += "$IO_ROWS = mysqli_stmt_affected_rows($stmt); \n";	
+ 	
+	myY += "if ($IO_ERR !== '' OR $IO_ROWS == 0 OR $IO_ROWS == -1) \n";
 	myY += "{ $IO_STS = 'ER'; } \n";
 	myY += "else \n";
 	myY += "{ $IO_STS = 'OK'; } \n";

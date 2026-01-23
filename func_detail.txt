@@ -22,5 +22,5 @@ endif
 
 #std_Button := ' '
 
-Request Fields((#start *hide)(#std_button *hide)(#IO_STS *OUT)(#IO_ERR *OUT)(#season_id *in)(#player_id *in)(#player_name *in *LC)(#nfl_team_id *in)(#nfl_team_id3 *in)(#position_id *in) )  
+Request Fields((#start *hide)(#std_button *hide)(#IO_STS *OUT)(#IO_ERR *OUT)(#IO_ROWS *OUT)(#season_id *in)(#player_id *in)(#player_name *in *LC)(#nfl_team_id *in)(#nfl_team_id3 *in)(#position_id *in) )  
 

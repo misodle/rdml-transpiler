@@ -1,0 +1,8 @@
+ometa CalcParser { 
+  	start				= "WHERE(" whereBody:w  ")"			    -> w
+						| anything+:xs   						-> { debug("dbg start2nd: " + xs.join('')); return 'N/A' },
+	whereBody	    	= ( parenExpr | nonParenChar )+:xs      -> { debug("dbg whereBody: " + xs.join('')); return xs.join('') },
+	parenExpr			= "(" whereBody:w ")" 					-> { debug("dbg parenExpr: " + ("(" + w + ")")); return ("(" + w + ")") },
+    nonParenChar  		= nonParenCharChar+:cs                  -> { debug("dbg nonParenChar: " + cs.join('')); return cs.join('') },
+    nonParenCharChar 	= anything:c ?(c != '(' && c != ')')	-> { debug("dbg nonParenCharChar: " + c); return c }
+}  

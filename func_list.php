@@ -29,7 +29,7 @@ _get_exchange();
 // $LIST1[] = array('SEASON_ID' => 0,'PLAYER_ID' => 1,'PLAYER_NAME' => 2,'NFL_TEAM_ID' => 3,'NFL_TEAM_ID3' => 4,'POSITION_ID' => 5);
 // $LISTCOUNT1=0;
 
-$LIMIT=20;
+$LIMIT=10;
 if ($STD_BUTTON=='DETAIL') {
 $_sub_parms = array('START' => $START,'STD_BUTTON' => $STD_BUTTON,'SEASON_ID' => $SEASON_ID,'PLAYER_ID' => $PLAYER_ID); 
 _exchange($_sub_parms); 
@@ -49,7 +49,7 @@ $START=($START+$LIMIT);
 }
 if ($STD_BUTTON=='LAST') {
 $START=0;
-$query = 'select * from nfl_player_defense' . ' where ' . '(' . '"N/A"' . ')' . ' ORDER BY SEASON_ID, PLAYER_ID';
+$query = 'select * from nfl_player_defense' . ' ORDER BY SEASON_ID, PLAYER_ID';
 var_dump($query);
 $stmt = mysqli_prepare($conID, $query); 
 mysqli_stmt_execute($stmt); 
@@ -74,11 +74,26 @@ $START=0;
 }
 /* comment -> OK*/
 
-/* comment ->Select Fields(*all) From_File(nfl_player_defense) limit(#start,#limit)*/
+$query = 'select * from nfl_player_defense' . ' ORDER BY SEASON_ID, PLAYER_ID' . ' LIMIT ' . '?,?' ;
+var_dump($query);
+$stmt = mysqli_prepare($conID, $query); 
+mysqli_stmt_bind_param($stmt ,'ii',$START,$LIMIT); 
+mysqli_stmt_execute($stmt); 
+$result = mysqli_stmt_get_result($stmt); 
+$IO_ERR = mysqli_stmt_error($stmt); 
+$IO_ROWS = mysqli_stmt_affected_rows($stmt); 
+while ($record = mysqli_fetch_array($result, MYSQLI_BOTH)) 
+{{ 
+foreach($record as $key => $value) { 
+$key = strtoupper($key); 
+${$key} = $value; 
+} 
 
-/* comment ->	add_entry to_list(#list1)*/
+$LIST1[] = array('SEASON_ID' => $SEASON_ID,'PLAYER_ID' => $PLAYER_ID,'PLAYER_NAME' => $PLAYER_NAME,'NFL_TEAM_ID' => $NFL_TEAM_ID,'NFL_TEAM_ID3' => $NFL_TEAM_ID3,'POSITION_ID' => $POSITION_ID);
+$LISTCOUNT1++;
 
-/* comment ->endselect*/
+    } 
+} 
 
 /* comment -> OK*/
 
@@ -156,28 +171,65 @@ $START=0;
 
 /* comment ->endselect*/
 
-$SEASON_ID=0;
-$NFL_TEAM_ID3="CHI";
-$query = 'select * from nfl_player_defense' . ' where ' . ' SEASON_ID=? ' . ' and ' . ' NFL_TEAM_ID3=? ' . ' and ' . '(' . 'season_id = 0 or position_id = "WR" OR position_id = "LB" OR position_id = "CB"' . ')' . ' ORDER BY SEASON_ID, PLAYER_ID' . ' LIMIT ' . '?,?' ;
-var_dump($query);
-$stmt = mysqli_prepare($conID, $query); 
-mysqli_stmt_bind_param($stmt ,'dsii',$SEASON_ID,$NFL_TEAM_ID3,$START,$LIMIT); 
-mysqli_stmt_execute($stmt); 
-$result = mysqli_stmt_get_result($stmt); 
-$IO_ERR = mysqli_stmt_error($stmt); 
-$IO_ROWS = mysqli_stmt_affected_rows($stmt); 
-while ($record = mysqli_fetch_array($result, MYSQLI_BOTH)) 
-{{ 
-foreach($record as $key => $value) { 
-$key = strtoupper($key); 
-${$key} = $value; 
-} 
+/* comment -> OK*/
 
-$LIST1[] = array('SEASON_ID' => $SEASON_ID,'PLAYER_ID' => $PLAYER_ID,'PLAYER_NAME' => $PLAYER_NAME,'NFL_TEAM_ID' => $NFL_TEAM_ID,'NFL_TEAM_ID3' => $NFL_TEAM_ID3,'POSITION_ID' => $POSITION_ID);
-$LISTCOUNT1++;
+/* comment ->#season_id := 0*/
 
-    } 
-} 
+/* comment ->#nfl_team_id3 := "CHI"*/
+
+/* comment ->Select Fields(*all) From_File(nfl_player_defense) where(#season_id = 0 or #position_id = 'WR' OR #position_id = "LB" OR #position_id = CB) with_key(#season_id #nfl_team_id3) limit(#start,#limit)*/
+
+/* comment ->	add_entry to_list(#list1)*/
+
+/* comment ->endselect*/
+
+/* comment -> this is supported, that is live input field in the where clause in LANSA, so this also needs a bind*/
+
+/* comment -> This is OK -try some variations with more complex logic, flip around the fields, use paranthesis and logical operators*/
+
+/* comment ->#season_id := 0*/
+
+/* comment ->#nfl_team_id3 := "CHI"*/
+
+/* comment ->#player_id_input := 1654*/
+
+/* comment ->Select Fields(*all) From_File(nfl_player_defense) where(#player_id = #player_id_input) with_key(#season_id #nfl_team_id3) limit(#start,#limit)*/
+
+/* comment ->	add_entry to_list(#list1)*/
+
+/* comment ->endselect*/
+
+/* comment ->Define Field(#input1) Type(*DEC) */
+
+/* comment ->#input1 := 1444*/
+
+/* comment ->Select Fields(*all) From_File(nfl_player_defense) where( #player_id = 1654 or #player_id = #input1 OR #nfl_team_id3 = CHI and #position_id = LB ) limit(#start,#limit)*/
+
+/* comment ->	add_entry to_list(#list1)*/
+
+/* comment ->endselect*/
+
+/* comment -> OK*/
+
+/* comment ->#input1 := 1444*/
+
+/* comment ->Select Fields(*all) From_File(nfl_player_defense) where(#player_id = #player_id_input) limit(#start,#limit)*/
+
+/* comment ->Select Fields(*all) From_File(nfl_player_defense) where( ( #player_id = 1654 or #player_id = #input1 ) OR ( #nfl_team_id3 = CHI and #position_id = LB ) ) limit(#start,#limit)*/
+
+/* comment ->Select Fields(*all) From_File(nfl_player_defense) where((#player_id = 1654 or #player_id = #input1) OR (#nfl_team_id3 = CHI and #position_id = LB)) limit(#start,#limit)*/
+
+/* comment ->Select Fields(*all) From_File(nfl_player_defense) WHERE( (#player_id = 16.54) ) limit(#start,#limit)*/
+
+/* comment ->	add_entry to_list(#list1)*/
+
+/* comment ->endselect*/
+
+/* comment ->#input1 := 1444*/
+
+/* comment ->Fetch Fields(*all) From_File(nfl_player_defense) where((#player_id = 1654) or (#player_id = #input1) OR ((#nfl_team_id3 = CHI) OR (#position_id = "LB")))*/
+
+/* comment ->add_entry to_list(#list1)*/
 
 $TBS = new \clsTinyButStrong;
 $TBS->SetOption('noerr', false);

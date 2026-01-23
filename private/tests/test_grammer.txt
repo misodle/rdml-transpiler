@@ -1,0 +1,3 @@
+ometa CalcParser {
+    start = anything*:chars -> chars.join('')
+}
