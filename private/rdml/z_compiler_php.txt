@@ -374,6 +374,8 @@ function formatWhere(w,t)
 	function formatOne(token)
 	{
 
+		debug("token=[" + token + "]");
+
 		if (/^[()]$/.test(token)) {								// paranthesis
 			return token;
 		
@@ -410,7 +412,7 @@ function formatWhere(w,t)
 	}
 
 	// extract each token (field, paranthesis, logical operator, literal, or quoted literal)
-	fullWhere = w.replace(/"[^"]*"|'[^']*'|\(|\)|[^\s]+/g, formatOne);
+	fullWhere = w.replace(/"[^"]*"|'[^']*'|\(|\)|-?\d+(\.\d+)?|[^\s]+/g, formatOne);
 	return [fullWhere,fullType,fullBind]; 
 
 }
