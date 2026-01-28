@@ -1,0 +1,12 @@
+[start]
+[print_id, [lit1, 'what is 1/4 * 8?']]
+[if, [comp, [id, ANSWER], [logic_op, !=], [lit1, '']]]
+[if, [comp, [id, ANSWER], [logic_op, ==], [mul, [div, [num, 1], [num, 4]], [num, 8]]]]
+[print_id, [lit1, 'THAT WAS THE ANSWER']]
+[else]
+[print_id, [lit2, "THAT'S NOT IT DUMMY"]]
+[endif]
+[endif]
+[request, [fields, [[id, ANSWER]]]]
+[end]
+

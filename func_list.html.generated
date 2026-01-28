@@ -1,0 +1,73 @@
+<html>
+
+<head>
+    <script type="text/javascript" src="ll_library.js"></script>
+</head>
+
+<body>
+    <form name="FORM" action="[onshow.CurrentScript]" method="POST">
+        <table>
+            <tr>
+                <th> </th>
+                <th> </th>
+                <th> </th>
+            </tr>
+            <tr>
+                <td>SEASON_ID</td>
+                <td></td>
+                <td>
+                <td><input type="hidden" name="SEASON_ID" value="[onshow.SEASON_ID]"></td>
+            </tr>
+            <tr>
+                <td>PLAYER_ID</td>
+                <td></td>
+                <td>
+                <td><input type="hidden" name="PLAYER_ID" value="[onshow.PLAYER_ID]"></td>
+            </tr>
+            <tr>
+                <td>STD_BUTTON</td>
+                <td></td>
+                <td>
+                <td><input type="hidden" name="STD_BUTTON" value="[onshow.STD_BUTTON]"></td>
+            </tr>
+            <tr>
+                <td>START</td>
+                <td></td>
+                <td>
+                <td><input type="hidden" name="START" value="[onshow.START]"></td>
+            </tr>
+        </table>
+        <table>
+            <tr style="background-color:#CACACA">
+                <td><strong>SEASON_ID</strong></td>
+                <td><strong>PLAYER_ID</strong></td>
+                <td><strong>PLAYER_NAME</strong></td>
+                <td><strong>NFL_TEAM_ID</strong></td>
+                <td><strong>NFL_TEAM_ID3</strong></td>
+                <td><strong>POSITION_ID</strong></td>
+            </tr>
+            <tr style="background-color:#F0F0F0">
+                <td>[LIST1.SEASON_ID;block=tr]</td>
+                <td>[LIST1.PLAYER_ID]</td>
+                <td>[LIST1.PLAYER_NAME]</td>
+                <td>[LIST1.NFL_TEAM_ID]</td>
+                <td>[LIST1.NFL_TEAM_ID3]</td>
+                <td>[LIST1.POSITION_ID]</td>
+            </tr>
+            <tr style="background-color:#E6E6E6">
+                <td>[LIST1.SEASON_ID;block=tr]</td>
+                <td>[LIST1.PLAYER_ID]</td>
+                <td>[LIST1.PLAYER_NAME]</td>
+                <td>[LIST1.NFL_TEAM_ID]</td>
+                <td>[LIST1.NFL_TEAM_ID3]</td>
+                <td>[LIST1.POSITION_ID]</td>
+            </tr>
+            <tr style="background-color:#FFCFB9">
+                <td colspan="99">[LIST1;block=tr;nodata]There is no data.</td>
+            </tr>
+        </table>
+        <input name="button" type="submit" value="Submit">
+    </form>
+</body>
+
+</html>
