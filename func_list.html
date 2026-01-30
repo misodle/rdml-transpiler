@@ -1,111 +1,61 @@
 <!doctype html>
 <html lang="en">
-
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>CRUD Table Browser</title>
-  <link rel="stylesheet" href="css/styles.css">
-  <script type="text/javascript" src="ll_library.js"></script>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>[onshow.TITLE]</title>
+<link rel="stylesheet" href="css/page.css">
+<script type="text/javascript" src="ll_library.js"></script>
 </head>
-
 <body>
-  <main class="page">
-    <header class="hero">
-      <h1 class="title">CRUD Table Browser</h1>
-      <p class="subtitle">Browse records — modernized layout.</p>
-    </header>
-
-    <section class="links">
-      <form name="FORM" action="[onshow.CurrentScript]" method="POST">
-        <div class="card">
-          <table>
-            <tr>
-              <th></th>
-              <th></th>
-              <th></th>
-            </tr>
-            <tr>
-              <td>SEASON_ID</td>
-              <td></td>
-              <td></td>
-              <td><input type="hidden" name="SEASON_ID" value="[onshow.SEASON_ID]"></td>
-            </tr>
-            <tr>
-              <td>PLAYER_ID</td>
-              <td></td>
-              <td></td>
-              <td><input type="hidden" name="PLAYER_ID" value="[onshow.PLAYER_ID]"></td>
-            </tr>
-            <tr>
-              <td>STD_BUTTON</td>
-              <td></td>
-              <td></td>
-              <td><input type="hidden" name="STD_BUTTON" value="[onshow.STD_BUTTON]"></td>
-            </tr>
-            <tr>
-              <td>START</td>
-              <td></td>
-              <td></td>
-              <td><input type="hidden" name="START" value="[onshow.START]"></td>
-            </tr>
-          </table>
-        </div>
-
-        <div class="card card-table">
-          <table class="table-list">
-            <thead>
-              <tr>
-                <th>Details</th>
-                <th>SEASON_ID</th>
-                <th>PLAYER_ID</th>
-                <th>PLAYER_NAME</th>
-                <th>NFL_TEAM_ID</th>
-                <th>NFL_TEAM_ID3</th>
-                <th>POSITION_ID</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr class="row-even">
-                <td><a href="javascript:SetFld('SEASON_ID','[LIST1.SEASON_ID;block=tr]');SetFld('PLAYER_ID','[LIST1.PLAYER_ID]');SetPgm('DETAIL');">Details</a></td>
-                <td>[LIST1.SEASON_ID]</td>
-                <td>[LIST1.PLAYER_ID]</td>
-                <td>[LIST1.PLAYER_NAME]</td>
-                <td>[LIST1.NFL_TEAM_ID]</td>
-                <td>[LIST1.NFL_TEAM_ID3]</td>
-                <td>[LIST1.POSITION_ID]</td>
-              </tr>
-              <tr class="row-odd">
-                <td><a href="javascript:SetFld('SEASON_ID','[LIST1.SEASON_ID;block=tr]');SetFld('PLAYER_ID','[LIST1.PLAYER_ID]');SetPgm('DETAIL');">Details</a></td>
-                <td>[LIST1.SEASON_ID]</td>
-                <td>[LIST1.PLAYER_ID]</td>
-                <td>[LIST1.PLAYER_NAME]</td>
-                <td>[LIST1.NFL_TEAM_ID]</td>
-                <td>[LIST1.NFL_TEAM_ID3]</td>
-                <td>[LIST1.POSITION_ID]</td>
-              </tr>
-              <tr class="row-nodata">
-                <td colspan="99">[LIST1;block=tr;nodata]There is no data.</td>
-              </tr>
-            </tbody>
-          </table>
-
-          <div class="table-actions">
-            <input class="btn" type="button" value="First" onclick="javascript:SetPgm('FIRST');">
-            <input class="btn" type="button" value="Previous" onclick="javascript:SetPgm('PREV');">
-            <input class="btn" type="button" value="Next" onclick="javascript:SetPgm('NEXT');">
-            <input class="btn" type="button" value="Last" onclick="javascript:SetPgm('LAST');">
-          </div>
-
-          <div style="margin-top:12px">
-            <a class="link-code" href="func_list.txt" target="_blank">RDML Code</a>
-          </div>
-        </div>
-      </form>
-    </section>
-
-    <footer class="foot">Tip: press Tab to see keyboard focus styles.</footer>
-  </main>
+<h1 class="title">[onshow.TITLE]</h1>
+<form name="FORM" action="[onshow.CurrentScript]" method="POST">
+<table><tr> <th> </th> <th> </th> <th> </th> </tr>
+<tr><td>SEASON_ID</td><td></td><td><td><input type="hidden" name="SEASON_ID" value="[onshow.SEASON_ID]"></td></tr>
+<tr><td>PLAYER_ID</td><td></td><td><td><input type="hidden" name="PLAYER_ID" value="[onshow.PLAYER_ID]"></td></tr>
+<tr><td>STD_BUTTON</td><td></td><td><td><input type="hidden" name="STD_BUTTON" value="[onshow.STD_BUTTON]"></td></tr>
+<tr><td>START</td><td></td><td><td><input type="hidden" name="START" value="[onshow.START]"></td></tr>
+</table>
+<table>
+<tr class="column_header">
+<td>Action</td><td><strong>SEASON_ID</strong></td>
+<td><strong>PLAYER_ID</strong></td>
+<td><strong>PLAYER_NAME</strong></td>
+<td><strong>NFL_TEAM_ID</strong></td>
+<td><strong>NFL_TEAM_ID3</strong></td>
+<td><strong>POSITION_ID</strong></td>
+</tr>
+<tr class="odd_row">
+<td><a href="javascript:SetFld('SEASON_ID','[LIST1.SEASON_ID;block=tr]');SetFld('PLAYER_ID','[LIST1.PLAYER_ID]');SetPgm('DETAIL');">Details</a></td>
+<td>[LIST1.SEASON_ID;block=tr]</td>
+<td>[LIST1.PLAYER_ID]</td>
+<td>[LIST1.PLAYER_NAME]</td>
+<td>[LIST1.NFL_TEAM_ID]</td>
+<td>[LIST1.NFL_TEAM_ID3]</td>
+<td>[LIST1.POSITION_ID]</td>
+</tr>
+<tr class="even_row">
+<td><a href="javascript:SetFld('SEASON_ID','[LIST1.SEASON_ID;block=tr]');SetFld('PLAYER_ID','[LIST1.PLAYER_ID]');SetPgm('DETAIL');">Details</a></td>
+<td>[LIST1.SEASON_ID;block=tr]</td>
+<td>[LIST1.PLAYER_ID]</td>
+<td>[LIST1.PLAYER_NAME]</td>
+<td>[LIST1.NFL_TEAM_ID]</td>
+<td>[LIST1.NFL_TEAM_ID3]</td>
+<td>[LIST1.POSITION_ID]</td>
+</tr>
+<tr class="no_rows">
+<td colspan="99">[LIST1;block=tr;nodata]There is no data.</td>
+</tr>
+</table>
+<!-- <input name="button" type="submit" value="Submit"> -->
+<input class="btn" type="button" value="First" onclick="javascript:SetPgm('FIRST');">
+<input class="btn" type="button" value="Previous" onclick="javascript:SetPgm('PREV');">
+<input class="btn" type="button" value="Next" onclick="javascript:SetPgm('NEXT');">
+<input class="btn" type="button" value="Last" onclick="javascript:SetPgm('LAST');">
+<div style="margin-top:12px">
+<a class="link-code" href="func_list.txt" target="_blank">RDML Code</a>
+</div>
+</form>
 </body>
-
 </html>
+

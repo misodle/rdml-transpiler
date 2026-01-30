@@ -31,7 +31,8 @@ ometa CalcParser {
 	
 	stmtx  			= stmt:x											-> (x)
 					| stmt2:x											-> (x)
-					| stmt3:x											-> (x),
+					| stmt3:x											-> (x)
+					| stmt4:x											-> (x),
   
 	stmt     		= ASSIGN:x                              			-> ['stmt', x]
 					| BEGIN_LOOP:x                          			-> ['stmt', x] 
@@ -74,6 +75,10 @@ ometa CalcParser {
 					| INSERT:x											-> ['stmt', x]
 					| DEFINE:x											-> ['stmt', x],
 	
+	stmt4     		= RAW_HTML:x										-> ['stmt', x]
+					| RAW_HTML_ROW:x									-> ['stmt', x]
+					| RAW_PHP:x											-> ['stmt', x],
+	
 	DEFINE			= "DEFINE" sp+ "FIELD(" sp* field:f sp* ")" sp+ "TYPE(" sp* ("*CHAR"|"*DEC"):t sp* ")"		-> ['define',f,t],
 	SELECT          = "SELECT" sp+ DB_FIELDS:f sp+ DB_FILE:t sp* DB_WHERE:w sp* DB_KEYS:k sp* DB_OPTIONS:o sp* LIMIT:l			
 																													-> ['select',t,f,w,k,o,l],
@@ -112,6 +117,9 @@ ometa CalcParser {
 					| "LEAVE"																					-> ['leave','N/A'],
 	CONTINUE		= "CONTINUE" sp+ "IF(" sp* cond:x sp* ")"													-> ['continue',x]
 					| "CONTINUE"																				-> ['continue','N/A'],
+	RAW_HTML		= "RAW_HTML" sp+ (~newline char)+:x															-> ['raw_html',x.join('')],
+	RAW_HTML_ROW	= "RAW_HTML_ROW" sp+ (~newline char)+:x														-> ['raw_html_row',x.join('')],
+	RAW_PHP			= "RAW_PHP"  sp+ (~newline char)+:x															-> ['raw_php',x.join('')],				
 	EXCHANGE		= "EXCHANGE" sp+ "FIELDS(" sp* fields:f sp* ")" sp*											-> ['exchange',['fields',f]],
 	CALL			= "CALL" sp+ CALLP:p sp* CALLF:f sp*														-> ['call',f],
 	CALLP			= "PROCESS(" sp* "*DIRECT":p sp* ")"														-> p

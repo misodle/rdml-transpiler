@@ -22,6 +22,7 @@ global $LISTCOUNT1 ;
 global $LIMIT ; 
 global $STD_BUTTON ; 
 global $START ; 
+global $TITLE ; 
 global $LIST1 ; 
 global $_LIST1_ptr ; 
 $_Lists[] = array('LIST1' => 'LISTCOUNT1'); 
@@ -50,7 +51,7 @@ $START=($START+$LIMIT);
 if ($STD_BUTTON=='LAST') {
 $START=0;
 $query = 'select * from nfl_player_defense' . ' ORDER BY SEASON_ID, PLAYER_ID';
-var_dump($query);
+# var_dump($query);
 $stmt = mysqli_prepare($conID, $query); 
 mysqli_stmt_execute($stmt); 
 $result = mysqli_stmt_get_result($stmt); 
@@ -75,7 +76,7 @@ $START=0;
 /* comment -> OK*/
 
 $query = 'select * from nfl_player_defense' . ' ORDER BY SEASON_ID, PLAYER_ID' . ' LIMIT ' . '?,?' ;
-var_dump($query);
+# var_dump($query);
 $stmt = mysqli_prepare($conID, $query); 
 mysqli_stmt_bind_param($stmt ,'ii',$START,$LIMIT); 
 mysqli_stmt_execute($stmt); 
@@ -231,12 +232,23 @@ $LISTCOUNT1++;
 
 /* comment ->add_entry to_list(#list1)*/
 
+$TITLE='CRUD Table Browser';
+
 $TBS = new \clsTinyButStrong;
 $TBS->SetOption('noerr', false);
 $TBS->LoadTemplate($CurrentTemplate);
 $TBS->MergeBlock('LIST1',$LIST1);
 $TBS->Show();
 exit(); 
+
+
+
+
+
+$test = "test";
+
+
+
 
 } 
 
@@ -264,7 +276,6 @@ $_field_array[] = array('NFL_TEAM_ID3','*OUT');
 $_field_array[] = array('POSITION_ID','*OUT');
 list($LIST1,$_LIST1_listcount) = getPostedList('LIST1',$_field_array); 
 $LISTCOUNT1 = $_LIST1_listcount; 
-echo "<br>"; 
  } 
  ?> 
 

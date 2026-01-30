@@ -73,7 +73,10 @@ ometa CalcCompiler {
 			| ['if' comp:x] 				   										-> l_if(x) 
 			| ['else']																-> l_else() 
 			| ['endif']                                      						-> l_endif()	
-			| ['comment' :x]								   						-> comment(x)
+			| ['comment' :x]														-> comment(x)
+			| ['raw_php' :x]							   							-> l_raw_php(x)
+			| ['raw_html' :x]								   						-> ''
+			| ['raw_html_row' :x]							   						-> ''
 			| ['error' :x]                                   						-> error(x),
     
 	fld     = ['id' :x ['attr' anything:y]]											-> ida(x,y)
@@ -541,7 +544,7 @@ function l_select(t,f,w,k,o,l)
 
 	myY += ";\n";
 	
-	myY += "var_dump($query);\n";
+	myY += "# var_dump($query);\n";
 	myY += "$stmt = mysqli_prepare($conID, $query); \n";
 	if (bind != '') myY += "mysqli_stmt_bind_param($stmt" + type + bind + "); \n";
 	myY += "mysqli_stmt_execute($stmt); \n";
@@ -629,7 +632,7 @@ function l_fetch(t,f,w,k,s)
 	}
 	myY += where + " . ' LIMIT 1';\n";
 	if (type != '') type = " ,'" + type + "'";
-	myY += "var_dump($query);\n";
+	myY += "# var_dump($query);\n";
 	myY += "$stmt = mysqli_prepare($conID, $query); \n";
 	if (bind != '') myY += "mysqli_stmt_bind_param($stmt" + type + bind + "); \n";
 	myY += "mysqli_stmt_execute($stmt); \n";
@@ -711,7 +714,7 @@ function l_delete(t,w,k,s)
 
 	if (type != '') type = " ,'" + type + "'";
 	
-	myY += "var_dump($query);\n";
+	myY += "# var_dump($query);\n";
 	
 	myY += "$stmt = mysqli_prepare($conID, $query); \n";
 	if (bind != '') myY += "mysqli_stmt_bind_param($stmt" + type + bind + "); \n";
@@ -790,7 +793,7 @@ function l_update(t,f,k,s)
 	
 	if (type != '') type = " ,'" + type + "'";
 
-	myY += "var_dump($query);\n";
+	myY += "# var_dump($query);\n";
 
 	myY += "$stmt = mysqli_prepare($conID, $query); \n";
 	if (bind != '') myY += "mysqli_stmt_bind_param($stmt" + type + bind + "); \n";
@@ -854,7 +857,7 @@ function l_insert(t,f,s)
 	
 	if (type != '') type = " ,'" + type + "'";
 	
-	myY += "var_dump($query);\n";
+	myY += "# var_dump($query);\n";
 	
 	myY += "$stmt = mysqli_prepare($conID, $query); \n";
 	if (bind != '') myY += "mysqli_stmt_bind_param($stmt" + type + bind + "); \n";
@@ -1441,6 +1444,10 @@ function comment(x)
 {
 	return '/* comment ->' + x + '*/' + '\n';
 }
+function l_raw_php(x)
+{
+	return x + '\n';
+}
 function ida(x,y)
 {
 	// debug_stuff += "X: " + x + "\n";										
@@ -1673,7 +1680,7 @@ function L_send_bottom()
 	}
 	
 	// myY += "print_r($_POST); \n";		// debug stuff, dump post array
-	myY += 'echo "<br>"; \n';
+	// myY += 'echo "<br>"; \n';cl
 	
 	myY += ' } \n ?> \n';
 	
