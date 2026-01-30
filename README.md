@@ -42,7 +42,7 @@ This is currently a proof of concept. To request a feature or report a bug, plea
 
 A simple batch test runner compiles cases under `private/tests/cases/`, compares generated outputs against golden files, and supports `--only` and `--update` flags. See the full usage and conventions:
 
-[private/tests/testUsage.md](./private/tests/TestUsage.md)
+[Test Runner Documentation](./private/tests/TestUsage.md)
 
 
 
