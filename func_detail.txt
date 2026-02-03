@@ -22,5 +22,16 @@ endif
 
 #std_Button := ' '
 
+#title := 'CRUD Detail Page'
+
 Request Fields((#start *hide)(#std_button *hide)(#IO_STS *OUT)(#IO_ERR *OUT)(#IO_ROWS *OUT)(#season_id *in)(#player_id *in)(#player_name *in *LC)(#nfl_team_id *in)(#nfl_team_id3 *in)(#position_id *in) )  
 
+raw_html        <input type="button" value="Go Back" onclick="javascript:SetPgm('GOBACK');">
+raw_html        <input type="button" value="Update" onclick="javascript:SetPgm('UPDATE');">
+raw_html        <input type="button" value="Insert" onclick="javascript:SetPgm('INSERT');">
+raw_html        <input type="button" value="Delete" onclick="javascript:SetPgm('DELETE');">
+
+raw_html        </br>
+raw_html        </br>
+
+raw_html        <a href="func_detail.txt" target="_blank">RDML Source</a>
