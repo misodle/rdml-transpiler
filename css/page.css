@@ -1,3 +1,28 @@
+/* Theme tokens */
+:root {
+  color-scheme: light dark;
+
+  --page-bg: #ffffff;
+  --text: #111827;
+
+  --row-odd: #f0f0f0;
+  --row-even: #e6e6e6;
+  --row-none: #ffcfb9;
+  --row-head: #cacaca;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --page-bg: #0b1220;
+    --text: #e5e7eb;
+
+    --row-odd: #111a2b;
+    --row-even: #0f172a;
+    --row-none: #3a1f14; /* muted orange/brown */
+    --row-head: #1f2937;
+  }
+}
+
 /* Basic, simple baseline (not a full reset) */
 
 /* Predictable sizing */
@@ -10,9 +35,11 @@
 /* Remove the browser’s default page margin */
 body {
   margin: 0;
-  line-height: 1.5; /* readable default */
-  /* padding: 16px; */ /* add whitespace all around */
-  padding: 0 16px; /* add only right left padding */
+  line-height: 1.5;
+  padding: 0 16px;
+
+  background: var(--page-bg);
+  color: var(--text);
 }
 
 /* Media won’t overflow containers */
@@ -38,14 +65,15 @@ html {
 }
 
 tr.odd_row {
-  background-color: #F0F0F0;
+  background-color: var(--row-odd);
 }
 tr.even_row {
-  background-color: #E6E6E6;
+  background-color: var(--row-even);
 }
 tr.no_rows {
-  background-color: #FFCFB9;
+  background-color: var(--row-none);
 }
 tr.column_header {
-  background-color: #CACACA;
+  background-color: var(--row-head);
 }
+
