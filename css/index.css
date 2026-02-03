@@ -1,0 +1,108 @@
+:root {
+  --bg: #f6f8fb;
+  --card: #ffffff;
+  --accent: #2563eb;
+  --text: #0b2b4a;
+  --muted: #3b5aa6;
+  --radius: 12px;
+  --shadow: 0 6px 20px rgba(16, 24, 40, 0.08);
+}
+
+* { box-sizing: border-box }
+
+body {
+  margin: 0;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  background: linear-gradient(180deg, var(--bg), #eef2f7);
+  color: var(--text);
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 48px 20px;
+}
+
+.page {
+  width: 100%;
+  max-width: 920px;
+}
+
+/* Hero */
+.hero { text-align: center; margin-bottom: 28px }
+.title { font-size: 2.1rem; margin: 0 0 6px; letter-spacing: -0.02em }
+.subtitle { margin: 0; color: var(--muted) }
+
+/* Link Grid */
+.link-grid {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.link-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 14px;
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  border: 1px solid rgba(37, 99, 235, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.link-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(16, 24, 40, 0.12);
+}
+
+.link-card a {
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.link-card .link-code {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+/* Footer */
+.foot { margin-top: 22px; color: var(--muted); text-align: center; font-size: 0.95rem }
+
+.btn {
+  background: var(--accent);
+  color: #fff;
+  border: 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+/* Responsive */
+@media (max-width: 920px) {
+  .link-grid { grid-template-columns: repeat(2, 1fr) }
+}
+
+@media (max-width: 520px) {
+  .title { font-size: 1.6rem }
+  .link-grid { grid-template-columns: 1fr }
+  body { padding: 28px 14px }
+}
+
+/* Dark Mode (limited to index-specific elements) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #071026;
+    --card: #0a1a2e;
+    --accent: #8b82ff;
+    --text: #e6eef7;
+    --muted: #9aa6b2;
+    --shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  }
+  body { background: linear-gradient(180deg, #041026, #071026) }
+  .link-card { border-color: rgba(255, 255, 255, 0.06) }
+}

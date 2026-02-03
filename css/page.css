@@ -1,0 +1,51 @@
+/* Basic, simple baseline (not a full reset) */
+
+/* Predictable sizing */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Remove the browser’s default page margin */
+body {
+  margin: 0;
+  line-height: 1.5; /* readable default */
+  /* padding: 16px; */ /* add whitespace all around */
+  padding: 0 16px; /* add only right left padding */
+}
+
+/* Media won’t overflow containers */
+img,
+picture,
+video,
+canvas,
+svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Form controls use the same font as the page */
+input,
+button,
+textarea,
+select {
+  font: inherit;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+tr.odd_row {
+  background-color: #F0F0F0;
+}
+tr.even_row {
+  background-color: #E6E6E6;
+}
+tr.no_rows {
+  background-color: #FFCFB9;
+}
+tr.column_header {
+  background-color: #CACACA;
+}

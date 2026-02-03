@@ -117,5 +117,18 @@ endselect
 //add_entry to_list(#list1)
 
 
+#title := 'CRUD Table Browser'
 
+raw_html_row <a href="javascript:SetFld('SEASON_ID','[LIST1.SEASON_ID;block=tr]');SetFld('PLAYER_ID','[LIST1.PLAYER_ID]');SetPgm('DETAIL');">Details</a>
 Request Fields((#season_id *hide) (#player_id *hide) (#std_button *hide) (#start *hide) #list1 )  
+
+raw_html <input class="btn" type="button" value="First" onclick="javascript:SetPgm('FIRST');">
+raw_html <input class="btn" type="button" value="Previous" onclick="javascript:SetPgm('PREV');">
+raw_html <input class="btn" type="button" value="Next" onclick="javascript:SetPgm('NEXT');">
+raw_html <input class="btn" type="button" value="Last" onclick="javascript:SetPgm('LAST');">
+
+raw_php  $test = "test";
+
+raw_html  <div style="margin-top:12px">
+raw_html     <a class="link-code" href="func_list.txt" target="_blank">RDML Code</a>
+raw_html  </div>

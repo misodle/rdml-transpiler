@@ -6,7 +6,7 @@ ometa CalcCompiler {
 	array	= ['start']												-> L_send_top()
 			| ['noop']												-> ''
 			| ['stmt' line:x]										-> (x)  
-			| ['end']												-> '',
+			| ['end']												-> L_send_bottom(),
 		  
 	line  	= stmt:x												-> (x)
 			| stmt2:x												-> (x)
@@ -58,10 +58,11 @@ ometa CalcCompiler {
 			| ['else']									   			-> ''
 			| ['endif']                                      		-> ''
 			| ['comment' :x]								   		-> ''
+			| ['raw_php' :x]							   			-> ''
+			| ['raw_html' :x]								   		-> L_raw_html(x)
+			| ['raw_html_row' :x]								   	-> L_raw_html_row(x)
 			| ['error' :x]                                   		-> '',
-
-
-		  
+ 
   fld   	= ['id' :x ['attr' anything:y]]	               			-> ida(x,y)
 			| ['id' :x]                                     		-> ida(x,[]),		  
 
@@ -83,6 +84,12 @@ ometa CalcCompiler {
 			| ['div' comp:x comp:y]                          		-> ''
 			| ['*internal']                                  		-> ''     		  	  
 }
+
+// Note this is not running in strict mode, so non declared variable are all global
+// Will need to drop global fields here when converting to strict mode or ES6 modules
+var is_html_row = false;
+var html_row = '';
+
 function ida(x,y)
 {
 	var field_array = new Array(x);				// convert field to array
@@ -94,8 +101,39 @@ function L_send_top()
 	def_list_stack			= new Array();		// global stack to save list definitions
 	def_list_screen   		= new Array();		// global stack to save lists for screen
 	
-	return;
+	myY  =  "<!doctype html>\n";
+	myY  += '<html lang="en">\n';
+	myY  += "<head>\n";
+	myY  += '<meta charset="utf-8" />\n';
+	myY  += '<meta name="viewport" content="width=device-width,initial-scale=1" />\n';
+	myY  += '<title>[onshow.TITLE]</title>\n';
+	myY  += '<link rel="stylesheet" href="css/page.css">\n';
+	myY  += "<script type=\"text/javascript\" src=\"ll_library.js\"></script>\n";
+	myY  += "</head>\n";
+	myY  += "<body>\n";
+	myY  += '<h1 class="title">[onshow.TITLE]</h1>\n';
+	
+	return myY;
 }  
+function L_send_bottom()
+{
+	myY = "</form>\n";
+	myY += "</body>\n";
+	myY += "</html>\n";
+	
+	return myY;
+}  
+function L_raw_html(x)
+{
+	return x + '\n';
+}
+function L_raw_html_row(x)
+{
+	// these are stored in the global space
+	is_html_row = true;
+	html_row = x;
+	return '';
+}
 function def_list(x,y,c)
 {
 																// [listname counter [field1 attr1 attr2] [f2 a1 a2] etc....]
@@ -123,13 +161,7 @@ function L_emit_field(x)
 	var flgPassword 	= new Boolean();
 	var flgLabel		= new Boolean();
 
-	myY   = "<html>\n";
-	myY  += "<head>\n";
-	myY  += "<script type=\"text/javascript\" src=\"ll_library.js\"></script>\n";
-	myY  += "</head>\n";
-	myY  += "<body>\n";
-
-	myY  += "<form name=\"FORM\" action=\"[onshow.CurrentScript]\" method=\"POST\">\n";
+	myY  = "<form name=\"FORM\" action=\"[onshow.CurrentScript]\" method=\"POST\">\n";
 		
 	myY  +="<table><tr> <th> </th> <th> </th> <th> </th> </tr>\n";							// empty row to build columns
 
@@ -213,8 +245,13 @@ function L_emit_field(x)
 		array_name = local_def_list[0];							// get the LIST name
 		
 		myY += '<table>\n';
+
+
 		
-		myY += '<tr style="background-color:#CACACA">\n';				// column headings
+		myY += '<tr class="column_header">\n';				// column headings
+		if (is_html_row) {									// include action column if specified
+			myY += "<td>Action</td>";
+		}
 		for (var j=2; j<local_def_list.length; j++) {
 			fldName = local_def_list[j][0];
 			myY += '<td><strong>';
@@ -224,6 +261,11 @@ function L_emit_field(x)
 		myY += '</tr>\n';
 		
 		var myRow = '';													// build a Row
+
+		if (is_html_row) {												// include action row if specified
+			myRow += "<td>" + html_row + "</td>\n";
+		}
+
 		for (var j=2; j<local_def_list.length; j++) {
 		
 			fldName 	= local_def_list[j][0];
@@ -265,22 +307,18 @@ function L_emit_field(x)
 			myRow += '</td>\n';
 		}
 		
-		myY += '<tr style="background-color:#F0F0F0">\n' + myRow + '</tr>\n';		// odd row
-		myY += '<tr style="background-color:#E6E6E6">\n' + myRow + '</tr>\n';		// even row
+		myY += '<tr class="odd_row">\n' + myRow + '</tr>\n';		// odd row
+		myY += '<tr class="even_row">\n' + myRow + '</tr>\n';		// even row
 		
-		myY += '<tr style="background-color:#FFCFB9">\n';							// blank table
+		myY += '<tr class="no_rows">\n';							// blank table
         myY += '<td colspan="99">[' + array_name + ';block=tr;nodata]There is no data.</td>\n';
         myY += '</tr>\n';
 		myY += '</table>\n';
 	}
 	
-	myY += "<input name=\"button\" type=\"submit\" value=\"Submit\">\n";
+	myY += "<!-- <input name=\"button\" type=\"submit\" value=\"Submit\"> -->\n";
 	
 	// myY+= "DEBUG: \n" + x.toSource() + "\n";
-	
-	myY += "</form>\n";
-	myY += "</body>\n";
-	myY += "</html>\n";
 	
 	return myY;
 }
