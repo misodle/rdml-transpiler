@@ -106,12 +106,12 @@ function L_send_top()
 	myY  += "<head>\n";
 	myY  += '<meta charset="utf-8" />\n';
 	myY  += '<meta name="viewport" content="width=device-width,initial-scale=1" />\n';
-	myY  += '<title>[onshow.TITLE]</title>\n';
+	myY  += '<title>[onshow.TITLE;noerr]</title>\n';
 	myY  += '<link rel="stylesheet" href="css/page.css">\n';
 	myY  += "<script type=\"text/javascript\" src=\"ll_library.js\"></script>\n";
 	myY  += "</head>\n";
 	myY  += "<body>\n";
-	myY  += '<h1 class="title">[onshow.TITLE]</h1>\n';
+	myY  += '<h1 class="title">[onshow.TITLE;noerr]</h1>\n';
 	
 	return myY;
 }  
