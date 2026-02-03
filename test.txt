@@ -1,11 +1,16 @@
-print('what is 1/4 * 8?')
+#title := 'Simple math example'
+
+print('what is 1/4 * 10?')
+
 
 if (#answer ^= '')
-	if (#answer = (1/4) * 8 )
-		PRINT('THAT WAS THE ANSWER')
+	if (#answer = (1/4) * 10 )
+		PRINT('Correct Answer!')
 	ELSE
-		PRINT("THAT'S NOT IT DUMMY")
+		PRINT("That is not the answer!")
 	endif
 endif
 
 Request Fields(#answer)
+
+raw_html <input name="button" type="submit" value="Submit">
